@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvEstadoConexion;
 
     private ConnectivityAndInternetAccess.NetworkObserver networkObserver;
+    private ConnectivityAndInternetAccess.Request activeProbeRequest;
     private ForecastRepository forecastRepository;
 
     private int selectedMunicipalityIndex = -1;
@@ -110,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        if (activeProbeRequest != null) {
+            activeProbeRequest.cancel();
+            activeProbeRequest = null;
+        }
         if (networkObserver != null) {
             networkObserver.close();
             networkObserver = null;
@@ -119,6 +124,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (activeProbeRequest != null) {
+            activeProbeRequest.cancel();
+            activeProbeRequest = null;
+        }
         if (forecastRepository != null) {
             forecastRepository.shutdown();
         }
@@ -132,6 +141,20 @@ public class MainActivity extends AppCompatActivity {
         } else if (state != null && state.isConnected()) {
             tvEstadoConexion.setText(R.string.conexion_disponible_sen_validar);
             tvEstadoConexion.setTextColor(0xFFB06000);
+            if (activeProbeRequest != null) {
+                activeProbeRequest.cancel();
+            }
+            activeProbeRequest = ConnectivityAndInternetAccess.checkInternetAsyncDefault(this, result -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    if (result != null && result.isReachable()) {
+                        tvEstadoConexion.setText(R.string.conexion_conectado);
+                        tvEstadoConexion.setTextColor(0xFF188038);
+                    } else {
+                        tvEstadoConexion.setText(R.string.conexion_sen_conexion);
+                        tvEstadoConexion.setTextColor(0xFFB3261E);
+                    }
+                }
+            });
         } else {
             tvEstadoConexion.setText(R.string.conexion_sen_conexion);
             tvEstadoConexion.setTextColor(0xFFB3261E);
@@ -245,27 +268,39 @@ public class MainActivity extends AppCompatActivity {
         btnSeleccionaLocalidad.setEnabled(false);
         btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
-        forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
-            @Override
-            public void onSuccess(Forecast forecast, String htmlContent) {
-                currentHtmlContent = htmlContent;
+        ConnectivityAndInternetAccess.checkInternetAsyncDefault(this, result -> {
+            if (isFinishing() || isDestroyed()) return;
+
+            if (result == null || !result.isReachable()) {
                 btnSeleccionaLocalidad.setEnabled(true);
                 btnSeleccionaLocalidad.setText(municipality.getName());
-                webvPronostico.loadDataWithBaseURL(
-                        "https://servizos.meteogalicia.gal/",
-                        htmlContent,
-                        "text/html",
-                        "UTF-8",
-                        null);
+                Toast.makeText(MainActivity.this, R.string.error_sen_conexion, Toast.LENGTH_SHORT).show();
+                updateNetworkStateDisplay(ConnectivityAndInternetAccess.snapshotNetworkState(MainActivity.this));
+                return;
             }
 
-            @Override
-            public void onError(Exception exception) {
-                android.util.Log.e("MainActivity", "Error fetching forecast from MeteoGalicia", exception);
-                btnSeleccionaLocalidad.setEnabled(true);
-                btnSeleccionaLocalidad.setText(municipality.getName());
-                Toast.makeText(MainActivity.this, R.string.error_obtenendo_pronostico, Toast.LENGTH_LONG).show();
-            }
+            forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
+                @Override
+                public void onSuccess(Forecast forecast, String htmlContent) {
+                    currentHtmlContent = htmlContent;
+                    btnSeleccionaLocalidad.setEnabled(true);
+                    btnSeleccionaLocalidad.setText(municipality.getName());
+                    webvPronostico.loadDataWithBaseURL(
+                            "https://servizos.meteogalicia.gal/",
+                            htmlContent,
+                            "text/html",
+                            "UTF-8",
+                            null);
+                }
+
+                @Override
+                public void onError(Exception exception) {
+                    android.util.Log.e("MainActivity", "Error fetching forecast from MeteoGalicia", exception);
+                    btnSeleccionaLocalidad.setEnabled(true);
+                    btnSeleccionaLocalidad.setText(municipality.getName());
+                    Toast.makeText(MainActivity.this, R.string.error_obtenendo_pronostico, Toast.LENGTH_LONG).show();
+                }
+            });
         });
     }
 
