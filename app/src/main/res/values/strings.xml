@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Tempo Galicia – Previsión</string>
+    <string name="seleccione_localidad">Seleccionar municipio</string>
+    <string name="boton_llamada">Chamar a información meteorolóxica</string>
+    <string name="header_subtitulo">O tempo de Galicia, dunha ollada</string>
+    
+    <string name="conexion_comprobando">Comprobando conexión…</string>
+    <string name="conexion_conectado">Conectado a Internet</string>
+    <string name="conexion_disponible_sen_validar">Rede dispoñible (sen validar)</string>
+    <string name="conexion_sen_conexion">Sen conexión a Internet</string>
+    
+    <string name="titulo_seleccionar_municipio">Seleccionar municipio</string>
+    <string name="cargando_municipio">Cargando %1$s…</string>
+    <string name="boton_cancelar">Cancelar</string>
+    <string name="boton_aceptar">Aceptar</string>
+
+    <string name="error_sen_conexion">Non hai conexión dispoñible</string>
+    <string name="error_obtenendo_pronostico">Non se puido obter o pronóstico. Inténteo de novo.</string>
+    <string name="error_aplicacion_telefono">Non hai aplicación de teléfono dispoñible no dispositivo.</string>
+
+    <string name="atencion_titulo">Atención</string>
+    <string name="confirmar_sair_mensaxe">¿Realmente desexa sair da aplicación?</string>
+    <string name="sim">Sí</string>
+    <string name="non">Non</string>
+
+    <string name="acerca_de_titulo">Acerca de Tempo Galicia</string>
+    <string name="acerca_de_texto">Tempo Galicia – Previsión v1.0.0\n\nFonte dos datos: Xunta de Galicia – MeteoGalicia.\nLicenza de datos: Creative Commons CC BY-SA 4.0.\n\nEsta é unha aplicación independente e non representa, está afiliada, patrocinada nin respaldada pola Xunta de Galicia nin por MeteoGalicia.</string>
+    <string name="boton_info_desc">Información da aplicación e fontes de datos</string>
+</resources>

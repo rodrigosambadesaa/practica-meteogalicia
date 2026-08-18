@@ -1,0 +1,22 @@
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+
+# Build outputs
+app/build/
+*.apk
+*.aab
+*.aar
+
+# Backup ZIPs
+*.zip
+
+# Logs
+*.log
+*.tmp
