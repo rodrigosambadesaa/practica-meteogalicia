@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Representa un municipio galego e o seu código oficial de MeteoGalicia.
+ * Representa un municipio galego e o seu código oficial de MeteoGalicia (313 concellos de Galicia).
  */
 public final class Municipality {
 
@@ -24,13 +24,8 @@ public final class Municipality {
         this.code = code.trim();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getCode() {
-        return code;
-    }
+    public String getName() { return name; }
+    public String getCode() { return code; }
 
     @Override
     public boolean equals(Object o) {
@@ -41,24 +36,326 @@ public final class Municipality {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(name, code);
-    }
+    public int hashCode() { return Objects.hash(name, code); }
 
     @Override
-    public String toString() {
-        return name;
-    }
+    public String toString() { return name; }
 
     public static List<Municipality> getDefaultMunicipalities() {
-        List<Municipality> list = new ArrayList<>();
+        List<Municipality> list = new ArrayList<>(313);
+        list.add(new Municipality("A Arnoia", "32003"));
+        list.add(new Municipality("A Baña", "15007"));
+        list.add(new Municipality("A Bola", "32014"));
+        list.add(new Municipality("A Cañiza", "36009"));
+        list.add(new Municipality("A Capela", "15018"));
         list.add(new Municipality("A Coruña", "15030"));
+        list.add(new Municipality("A Estrada", "36017"));
+        list.add(new Municipality("A Fonsagrada", "27018"));
+        list.add(new Municipality("A Guarda", "36023"));
+        list.add(new Municipality("A Gudiña", "32034"));
+        list.add(new Municipality("A Illa de Arousa", "36901"));
+        list.add(new Municipality("A Lama", "36025"));
+        list.add(new Municipality("A Laracha", "15041"));
+        list.add(new Municipality("A Merca", "32047"));
+        list.add(new Municipality("A Mezquita", "32048"));
+        list.add(new Municipality("A Pastoriza", "27044"));
+        list.add(new Municipality("A Peroxa", "32059"));
+        list.add(new Municipality("A Pobra de Trives", "32063"));
+        list.add(new Municipality("A Pobra do Brollón", "27047"));
+        list.add(new Municipality("A Pobra do Caramiñal", "15067"));
+        list.add(new Municipality("A Pontenova", "27048"));
+        list.add(new Municipality("A Rúa", "32072"));
+        list.add(new Municipality("A Teixeira", "32080"));
+        list.add(new Municipality("A Veiga", "32083"));
+        list.add(new Municipality("Abadín", "27001"));
+        list.add(new Municipality("Abegondo", "15001"));
+        list.add(new Municipality("Agolada", "36020"));
+        list.add(new Municipality("Alfoz", "27002"));
+        list.add(new Municipality("Allariz", "32001"));
+        list.add(new Municipality("Ames", "15002"));
+        list.add(new Municipality("Amoeiro", "32002"));
+        list.add(new Municipality("Antas de Ulla", "27003"));
+        list.add(new Municipality("Aranga", "15003"));
+        list.add(new Municipality("Arbo", "36001"));
+        list.add(new Municipality("Ares", "15004"));
+        list.add(new Municipality("Arteixo", "15005"));
+        list.add(new Municipality("Arzúa", "15006"));
+        list.add(new Municipality("As Neves", "36034"));
+        list.add(new Municipality("As Nogais", "27037"));
+        list.add(new Municipality("As Pontes de García Rodríguez", "15070"));
+        list.add(new Municipality("As Somozas", "15081"));
+        list.add(new Municipality("Avión", "32004"));
+        list.add(new Municipality("Baiona", "36003"));
+        list.add(new Municipality("Baleira", "27004"));
+        list.add(new Municipality("Baltar", "32005"));
+        list.add(new Municipality("Bande", "32006"));
+        list.add(new Municipality("Baños de Molgas", "32007"));
+        list.add(new Municipality("Baralla", "27901"));
+        list.add(new Municipality("Barbadás", "32008"));
+        list.add(new Municipality("Barreiros", "27005"));
+        list.add(new Municipality("Barro", "36002"));
+        list.add(new Municipality("Beade", "32010"));
+        list.add(new Municipality("Beariz", "32011"));
+        list.add(new Municipality("Becerreá", "27006"));
+        list.add(new Municipality("Begonte", "27007"));
+        list.add(new Municipality("Bergondo", "15008"));
+        list.add(new Municipality("Betanzos", "15009"));
+        list.add(new Municipality("Boborás", "32013"));
+        list.add(new Municipality("Boimorto", "15010"));
+        list.add(new Municipality("Boiro", "15011"));
+        list.add(new Municipality("Boqueixón", "15012"));
+        list.add(new Municipality("Bóveda", "27008"));
+        list.add(new Municipality("Brión", "15013"));
+        list.add(new Municipality("Bueu", "36004"));
+        list.add(new Municipality("Burela", "27902"));
+        list.add(new Municipality("Cabana de Bergantiños", "15014"));
+        list.add(new Municipality("Cabanas", "15015"));
+        list.add(new Municipality("Caldas de Reis", "36005"));
+        list.add(new Municipality("Calvos de Randín", "32016"));
+        list.add(new Municipality("Camariñas", "15016"));
+        list.add(new Municipality("Cambados", "36006"));
+        list.add(new Municipality("Cambre", "15017"));
+        list.add(new Municipality("Campo Lameiro", "36007"));
+        list.add(new Municipality("Cangas", "36008"));
+        list.add(new Municipality("Carballeda de Avia", "32018"));
+        list.add(new Municipality("Carballeda de Valdeorras", "32017"));
+        list.add(new Municipality("Carballedo", "27009"));
+        list.add(new Municipality("Carballo", "15019"));
+        list.add(new Municipality("Cariño", "15901"));
+        list.add(new Municipality("Carnota", "15020"));
+        list.add(new Municipality("Carral", "15021"));
+        list.add(new Municipality("Cartelle", "32020"));
+        list.add(new Municipality("Castrelo de Miño", "32022"));
+        list.add(new Municipality("Castrelo do Val", "32021"));
+        list.add(new Municipality("Castro Caldelas", "32023"));
+        list.add(new Municipality("Castro de Rei", "27010"));
+        list.add(new Municipality("Castroverde", "27011"));
+        list.add(new Municipality("Catoira", "36010"));
+        list.add(new Municipality("Cedeira", "15022"));
+        list.add(new Municipality("Cee", "15023"));
+        list.add(new Municipality("Celanova", "32024"));
+        list.add(new Municipality("Cenlle", "32025"));
+        list.add(new Municipality("Cerceda", "15024"));
+        list.add(new Municipality("Cerdedo-Cotobade", "36902"));
+        list.add(new Municipality("Cerdido", "15025"));
+        list.add(new Municipality("Cervantes", "27012"));
+        list.add(new Municipality("Cervo", "27013"));
+        list.add(new Municipality("Chandrexa de Queixa", "32029"));
+        list.add(new Municipality("Chantada", "27016"));
+        list.add(new Municipality("Coirós", "15027"));
+        list.add(new Municipality("Coles", "32026"));
+        list.add(new Municipality("Corcubión", "15028"));
+        list.add(new Municipality("Coristanco", "15029"));
+        list.add(new Municipality("Cortegada", "32027"));
+        list.add(new Municipality("Cospeito", "27015"));
+        list.add(new Municipality("Covelo", "36013"));
+        list.add(new Municipality("Crecente", "36014"));
+        list.add(new Municipality("Cualedro", "32028"));
+        list.add(new Municipality("Culleredo", "15031"));
+        list.add(new Municipality("Cuntis", "36015"));
+        list.add(new Municipality("Curtis", "15032"));
+        list.add(new Municipality("Dodro", "15033"));
+        list.add(new Municipality("Dozón", "36016"));
+        list.add(new Municipality("Dumbría", "15034"));
+        list.add(new Municipality("Entrimo", "32030"));
+        list.add(new Municipality("Esgos", "32031"));
+        list.add(new Municipality("Fene", "15035"));
         list.add(new Municipality("Ferrol", "15036"));
+        list.add(new Municipality("Fisterra", "15037"));
+        list.add(new Municipality("Folgoso do Courel", "27017"));
+        list.add(new Municipality("Forcarei", "36018"));
+        list.add(new Municipality("Fornelos de Montes", "36019"));
+        list.add(new Municipality("Foz", "27019"));
+        list.add(new Municipality("Frades", "15038"));
+        list.add(new Municipality("Friol", "27020"));
+        list.add(new Municipality("Gomesende", "32033"));
+        list.add(new Municipality("Gondomar", "36021"));
+        list.add(new Municipality("Guitiriz", "27022"));
+        list.add(new Municipality("Guntín", "27023"));
+        list.add(new Municipality("Irixoa", "15039"));
+        list.add(new Municipality("Lalín", "36024"));
+        list.add(new Municipality("Láncara", "27026"));
+        list.add(new Municipality("Larouco", "32038"));
+        list.add(new Municipality("Laxe", "15040"));
+        list.add(new Municipality("Laza", "32039"));
+        list.add(new Municipality("Leiro", "32040"));
+        list.add(new Municipality("Lobeira", "32041"));
+        list.add(new Municipality("Lobios", "32042"));
+        list.add(new Municipality("Lourenzá", "27027"));
+        list.add(new Municipality("Lousame", "15042"));
         list.add(new Municipality("Lugo", "27028"));
+        list.add(new Municipality("Maceda", "32043"));
+        list.add(new Municipality("Malpica de Bergantiños", "15043"));
+        list.add(new Municipality("Mañón", "15044"));
+        list.add(new Municipality("Manzaneda", "32044"));
+        list.add(new Municipality("Marín", "36026"));
+        list.add(new Municipality("Maside", "32045"));
+        list.add(new Municipality("Mazaricos", "15045"));
+        list.add(new Municipality("Meaño", "36027"));
+        list.add(new Municipality("Meira", "27029"));
+        list.add(new Municipality("Meis", "36028"));
+        list.add(new Municipality("Melide", "15046"));
+        list.add(new Municipality("Melón", "32046"));
+        list.add(new Municipality("Mesía", "15047"));
+        list.add(new Municipality("Miño", "15048"));
+        list.add(new Municipality("Moaña", "36029"));
+        list.add(new Municipality("Moeche", "15049"));
+        list.add(new Municipality("Mondariz", "36030"));
+        list.add(new Municipality("Mondariz-Balneario", "36031"));
+        list.add(new Municipality("Mondoñedo", "27030"));
+        list.add(new Municipality("Monfero", "15050"));
+        list.add(new Municipality("Monforte de Lemos", "27031"));
+        list.add(new Municipality("Montederramo", "32049"));
+        list.add(new Municipality("Monterrei", "32050"));
+        list.add(new Municipality("Monterroso", "27032"));
+        list.add(new Municipality("Moraña", "36032"));
+        list.add(new Municipality("Mos", "36033"));
+        list.add(new Municipality("Mugardos", "15051"));
+        list.add(new Municipality("Muíños", "32051"));
+        list.add(new Municipality("Muras", "27033"));
+        list.add(new Municipality("Muros", "15053"));
+        list.add(new Municipality("Muxía", "15052"));
+        list.add(new Municipality("Narón", "15054"));
+        list.add(new Municipality("Navia de Suarna", "27034"));
+        list.add(new Municipality("Neda", "15055"));
+        list.add(new Municipality("Negreira", "15056"));
+        list.add(new Municipality("Negueira de Muñiz", "27035"));
+        list.add(new Municipality("Nigrán", "36035"));
+        list.add(new Municipality("Nogueira de Ramuín", "32052"));
+        list.add(new Municipality("Noia", "15057"));
+        list.add(new Municipality("O Barco de Valdeorras", "32009"));
+        list.add(new Municipality("O Bolo", "32015"));
+        list.add(new Municipality("O Carballiño", "32019"));
+        list.add(new Municipality("O Corgo", "27014"));
+        list.add(new Municipality("O Grove", "36022"));
+        list.add(new Municipality("O Incio", "27024"));
+        list.add(new Municipality("O Irixo", "32035"));
+        list.add(new Municipality("O Páramo", "27043"));
+        list.add(new Municipality("O Pereiro de Aguiar", "32058"));
+        list.add(new Municipality("O Pino", "15066"));
+        list.add(new Municipality("O Porriño", "36039"));
+        list.add(new Municipality("O Rosal", "36048"));
+        list.add(new Municipality("O Saviñao", "27058"));
+        list.add(new Municipality("O Valadouro", "27063"));
+        list.add(new Municipality("O Vicedo", "27064"));
+        list.add(new Municipality("Oia", "36036"));
+        list.add(new Municipality("Oímbra", "32053"));
+        list.add(new Municipality("Oleiros", "15058"));
+        list.add(new Municipality("Ordes", "15059"));
+        list.add(new Municipality("Oroso", "15060"));
+        list.add(new Municipality("Ortigueira", "15061"));
+        list.add(new Municipality("Os Blancos", "32012"));
         list.add(new Municipality("Ourense", "32054"));
+        list.add(new Municipality("Ourol", "27038"));
+        list.add(new Municipality("Outeiro de Rei", "27039"));
+        list.add(new Municipality("Outes", "15062"));
+        list.add(new Municipality("Oza-Cesuras", "15902"));
+        list.add(new Municipality("Paderne", "15064"));
+        list.add(new Municipality("Paderne de Allariz", "32055"));
+        list.add(new Municipality("Padrenda", "32056"));
+        list.add(new Municipality("Padrón", "15065"));
+        list.add(new Municipality("Palas de Rei", "27040"));
+        list.add(new Municipality("Pantón", "27041"));
+        list.add(new Municipality("Parada de Sil", "32057"));
+        list.add(new Municipality("Paradela", "27042"));
+        list.add(new Municipality("Pazos de Borbén", "36037"));
+        list.add(new Municipality("Pedrafita do Cebreiro", "27045"));
+        list.add(new Municipality("Petín", "32060"));
+        list.add(new Municipality("Piñor", "32061"));
+        list.add(new Municipality("Poio", "36041"));
+        list.add(new Municipality("Pol", "27046"));
+        list.add(new Municipality("Ponte Caldelas", "36043"));
+        list.add(new Municipality("Ponteareas", "36042"));
+        list.add(new Municipality("Ponteceso", "15068"));
+        list.add(new Municipality("Pontecesures", "36044"));
+        list.add(new Municipality("Pontedeume", "15069"));
+        list.add(new Municipality("Pontedeva", "32064"));
         list.add(new Municipality("Pontevedra", "36038"));
+        list.add(new Municipality("Porqueira", "32062"));
+        list.add(new Municipality("Portas", "36040"));
+        list.add(new Municipality("Porto do Son", "15071"));
+        list.add(new Municipality("Portomarín", "27049"));
+        list.add(new Municipality("Punxín", "32065"));
+        list.add(new Municipality("Quintela de Leirado", "32066"));
+        list.add(new Municipality("Quiroga", "27050"));
+        list.add(new Municipality("Rábade", "27056"));
+        list.add(new Municipality("Rairiz de Veiga", "32067"));
+        list.add(new Municipality("Ramirás", "32068"));
+        list.add(new Municipality("Redondela", "36045"));
+        list.add(new Municipality("Rianxo", "15072"));
+        list.add(new Municipality("Ribadavia", "32069"));
+        list.add(new Municipality("Ribadeo", "27051"));
+        list.add(new Municipality("Ribadumia", "36046"));
+        list.add(new Municipality("Ribas de Sil", "27052"));
+        list.add(new Municipality("Ribeira", "15073"));
+        list.add(new Municipality("Ribeira de Piquín", "27053"));
+        list.add(new Municipality("Riós", "32071"));
+        list.add(new Municipality("Riotorto", "27054"));
+        list.add(new Municipality("Rodeiro", "36047"));
+        list.add(new Municipality("Rois", "15074"));
+        list.add(new Municipality("Rubiá", "32073"));
+        list.add(new Municipality("Sada", "15075"));
+        list.add(new Municipality("Salceda de Caselas", "36049"));
+        list.add(new Municipality("Salvaterra de Miño", "36050"));
+        list.add(new Municipality("Samos", "27055"));
+        list.add(new Municipality("San Amaro", "32074"));
+        list.add(new Municipality("San Cibrao das Viñas", "32075"));
+        list.add(new Municipality("San Cristovo de Cea", "32076"));
+        list.add(new Municipality("San Sadurniño", "15076"));
+        list.add(new Municipality("San Xoán de Río", "32070"));
+        list.add(new Municipality("Sandiás", "32077"));
+        list.add(new Municipality("Santa Comba", "15077"));
         list.add(new Municipality("Santiago de Compostela", "15078"));
+        list.add(new Municipality("Santiso", "15079"));
+        list.add(new Municipality("Sanxenxo", "36051"));
+        list.add(new Municipality("Sarreaus", "32078"));
+        list.add(new Municipality("Sarria", "27057"));
+        list.add(new Municipality("Silleda", "36052"));
+        list.add(new Municipality("Sober", "27059"));
+        list.add(new Municipality("Sobrado", "15080"));
+        list.add(new Municipality("Soutomaior", "36053"));
+        list.add(new Municipality("Taboada", "27060"));
+        list.add(new Municipality("Taboadela", "32079"));
+        list.add(new Municipality("Teo", "15082"));
+        list.add(new Municipality("Toén", "32081"));
+        list.add(new Municipality("Tomiño", "36054"));
+        list.add(new Municipality("Toques", "15083"));
+        list.add(new Municipality("Tordoia", "15084"));
+        list.add(new Municipality("Touro", "15085"));
+        list.add(new Municipality("Trabada", "27061"));
+        list.add(new Municipality("Trasmiras", "32082"));
+        list.add(new Municipality("Trazo", "15086"));
+        list.add(new Municipality("Triacastela", "27062"));
+        list.add(new Municipality("Tui", "36055"));
+        list.add(new Municipality("Val do Dubra", "15088"));
+        list.add(new Municipality("Valdoviño", "15087"));
+        list.add(new Municipality("Valga", "36056"));
+        list.add(new Municipality("Vedra", "15089"));
+        list.add(new Municipality("Verea", "32084"));
+        list.add(new Municipality("Verín", "32085"));
+        list.add(new Municipality("Viana do Bolo", "32086"));
         list.add(new Municipality("Vigo", "36057"));
+        list.add(new Municipality("Vila de Cruces", "36059"));
+        list.add(new Municipality("Vilaboa", "36058"));
+        list.add(new Municipality("Vilagarcía de Arousa", "36060"));
+        list.add(new Municipality("Vilalba", "27065"));
+        list.add(new Municipality("Vilamarín", "32087"));
+        list.add(new Municipality("Vilamartín de Valdeorras", "32088"));
+        list.add(new Municipality("Vilanova de Arousa", "36061"));
+        list.add(new Municipality("Vilar de Barrio", "32089"));
+        list.add(new Municipality("Vilar de Santos", "32090"));
+        list.add(new Municipality("Vilardevós", "32091"));
+        list.add(new Municipality("Vilariño de Conso", "32092"));
+        list.add(new Municipality("Vilarmaior", "15091"));
+        list.add(new Municipality("Vilasantar", "15090"));
+        list.add(new Municipality("Vimianzo", "15092"));
+        list.add(new Municipality("Viveiro", "27066"));
+        list.add(new Municipality("Xermade", "27021"));
+        list.add(new Municipality("Xinzo de Limia", "32032"));
+        list.add(new Municipality("Xove", "27025"));
+        list.add(new Municipality("Xunqueira de Ambía", "32036"));
+        list.add(new Municipality("Xunqueira de Espadanedo", "32037"));
+        list.add(new Municipality("Zas", "15093"));
         return Collections.unmodifiableList(list);
     }
 }
