@@ -1,7 +1,10 @@
 package gal.rodrigosambade.tempogalicia.ui;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -12,12 +15,16 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import gal.rodrigosambade.tempogalicia.R;
 import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
+import gal.rodrigosambade.tempogalicia.notification.WeatherNotificationHelper;
 import gal.rodrigosambade.tempogalicia.repository.ForecastRepository;
 import gal.rodrigosambade.tempogalicia.util.NetworkValidationManager;
+import gal.rodrigosambade.tempogalicia.widget.ForecastAppWidgetProvider;
 
 import net.i2p.android.router.util.ConnectivityAndInternetAccess;
 
@@ -53,6 +60,16 @@ public class MainActivity extends AppCompatActivity {
 
         municipalities = Municipality.getDefaultMunicipalities();
         forecastRepository = new ForecastRepository();
+
+        // Inicializar canles de notificación
+        WeatherNotificationHelper.createNotificationChannels(this);
+
+        // Solicitar permiso POST_NOTIFICATIONS en Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
 
         btnSeleccionaLocalidad = findViewById(R.id.btn_seleccionaLocalidad);
         webvPronostico = findViewById(R.id.webv_pronostico);
@@ -314,6 +331,10 @@ public class MainActivity extends AppCompatActivity {
                             "text/html",
                             "UTF-8",
                             null);
+
+                    // Emitir notificación de previsión e actualizar widgets
+                    WeatherNotificationHelper.showWeatherForecastNotification(MainActivity.this, municipality, forecast);
+                    ForecastAppWidgetProvider.updateAllWidgets(MainActivity.this);
                 }
 
                 @Override
@@ -328,6 +349,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNetworkFailureDialog(Municipality municipality, String reasonMessage) {
+        WeatherNotificationHelper.showNetworkAlertNotification(this, reasonMessage);
+
         new AlertDialog.Builder(this)
                 .setTitle(R.string.atencion_titulo)
                 .setMessage(reasonMessage)
@@ -353,6 +376,9 @@ public class MainActivity extends AppCompatActivity {
                         "text/html",
                         "UTF-8",
                         null);
+
+                WeatherNotificationHelper.showWeatherForecastNotification(MainActivity.this, municipality, forecast);
+                ForecastAppWidgetProvider.updateAllWidgets(MainActivity.this);
             }
 
             @Override

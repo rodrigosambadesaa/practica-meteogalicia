@@ -59,5 +59,19 @@
     <string name="intentos">Intentos: %1$s</string>
     <string name="boton_copiar_informe">Copiar Informe de Diagnóstico</string>
     <string name="informe_copiado">Informe copiado ao portapapeis</string>
+    <!-- Notifications & Widget Strings -->
+    <string name="canal_notificacion_tempo_nome">Previsión e Alertas Meteorolóxicas</string>
+    <string name="canal_notificacion_tempo_desc">Notificacións de previsión diaria e alertas de choiva de MeteoGalicia</string>
+    <string name="canal_notificacion_rede_nome">Diagnósticos de Rede e Dominios</string>
+    <string name="canal_notificacion_rede_desc">Alertas de alcance e conectividade cos servidores de MeteoGalicia</string>
+
+    <string name="notificacion_titulo_tempo">O tempo en %1$s – MeteoGalicia</string>
+    <string name="notificacion_corpo_tempo">Máx: %1$d°C / Mín: %2$d°C • Probabilidade de choiva: %3$d%%</string>
+    <string name="alerta_choiva_titulo">Alerta de Choiva Elevada en %1$s</string>
+    <string name="alerta_choiva_corpo">Prevese unha probabilidade de choiva do %1$d%% hoxe.</string>
+    <string name="notificacion_rede_titulo">Incidencia na conectividade con MeteoGalicia</string>
+
+    <string name="widget_nome">Tempo Galicia – Previsión</string>
 </resources>
+
 
