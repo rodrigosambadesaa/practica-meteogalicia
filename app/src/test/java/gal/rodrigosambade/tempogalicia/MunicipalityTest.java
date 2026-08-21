@@ -20,11 +20,11 @@ public class MunicipalityTest {
         List<Municipality> list = Municipality.getDefaultMunicipalities();
         assertNotNull(list);
         assertFalse(list.isEmpty());
-        assertEquals(7, list.size());
+        assertEquals(313, list.size());
 
-        Municipality coruna = list.get(0);
-        assertEquals("A Coruña", coruna.getName());
-        assertEquals("15030", coruna.getCode());
+        Municipality arnoia = list.get(0);
+        assertEquals("A Arnoia", arnoia.getName());
+        assertEquals("32003", arnoia.getCode());
     }
 
     @Test(expected = IllegalArgumentException.class)

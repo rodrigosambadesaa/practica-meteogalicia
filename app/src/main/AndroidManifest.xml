@@ -22,6 +22,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="gal.rodrigosambade.tempogalicia.ui.NetworkDiagnosticsActivity"
+            android:exported="false"
+            android:label="@string/titulo_diagnostico_rede"
+            android:parentActivityName="gal.rodrigosambade.tempogalicia.ui.MainActivity" />
+
     </application>
 
 </manifest>

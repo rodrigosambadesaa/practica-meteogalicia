@@ -5,16 +5,24 @@
     <string name="header_subtitulo">O tempo de Galicia, dunha ollada</string>
     
     <string name="conexion_comprobando">Comprobando conexión…</string>
-    <string name="conexion_conectado">Conectado a Internet</string>
-    <string name="conexion_disponible_sen_validar">Rede dispoñible (sen validar)</string>
+    <string name="conexion_conectado">Conectado a Internet e MeteoGalicia</string>
+
+    <string name="conexion_disponible_sen_validar">Rede dispoñible (comprobando dominios…)</string>
     <string name="conexion_sen_conexion">Sen conexión a Internet</string>
+    <string name="conexion_dominios_inalcanzables">Rede conectada (Servizos MeteoGalicia inalcanzables)</string>
+    <string name="conexion_portal_cautivo">Portal cautivo detectado na rede</string>
     
     <string name="titulo_seleccionar_municipio">Seleccionar municipio</string>
     <string name="cargando_municipio">Cargando %1$s…</string>
+    <string name="comprobando_dominios">Validando conectividade con MeteoGalicia…</string>
     <string name="boton_cancelar">Cancelar</string>
     <string name="boton_aceptar">Aceptar</string>
+    <string name="boton_reintentar">Reintentar</string>
+    <string name="boton_diagnostico">Diagnóstico de Rede</string>
+    <string name="boton_datos_offline">Usar datos offline</string>
 
     <string name="error_sen_conexion">Non hai conexión dispoñible</string>
+    <string name="error_dominios_meteogalicia">Non se puido conectar cos servidores de MeteoGalicia (%1$s)</string>
     <string name="error_obtenendo_pronostico">Non se puido obter o pronóstico. Inténteo de novo.</string>
     <string name="error_aplicacion_telefono">Non hai aplicación de teléfono dispoñible no dispositivo.</string>
 
@@ -26,4 +34,30 @@
     <string name="acerca_de_titulo">Acerca de Tempo Galicia</string>
     <string name="acerca_de_texto">Tempo Galicia – Previsión v1.0.0\n\nFonte dos datos: Xunta de Galicia – MeteoGalicia.\nLicenza de datos: Creative Commons CC BY-SA 4.0.\n\nEsta é unha aplicación independente e non representa, está afiliada, patrocinada nin respaldada pola Xunta de Galicia nin por MeteoGalicia.</string>
     <string name="boton_info_desc">Información da aplicación e fontes de datos</string>
+
+    <!-- Diagnostics Activity Strings -->
+    <string name="titulo_diagnostico_rede">Diagnóstico de Rede e Dominios</string>
+    <string name="subtitulo_diagnostico">Validación asíncrona de conectividade e alcance de servidores</string>
+    <string name="boton_executar_diagnostico">Executar Diagnóstico Asíncrono Completo</string>
+    <string name="diagnostico_en_proceso">Executando probas asíncronas de dominios…</string>
+    <string name="estado_interfaz">Interfaz de rede activa</string>
+    <string name="estado_validado_so">Validado polo sistema operativo</string>
+    <string name="estado_portal_cautivo">Detector de portal cautivo</string>
+    <string name="estado_velocidade">Velocidade estimada</string>
+    <string name="estado_modo_avion">Modo Avión</string>
+    <string name="estado_vpn">Rede privada virtual (VPN)</string>
+    <string name="resultados_dominios">Resultados de alcance de dominios e hosts</string>
+    <string name="si">Sí</string>
+    <string name="no">Non</string>
+    <string name="detectado">Detectado</string>
+    <string name="sen_detectar">Sen detectar</string>
+    <string name="rapida">Rápida</string>
+    <string name="lenta">Lenta / Descoñecida</string>
+    <string name="alcanzable">Alcanzable</string>
+    <string name="inalcanzable">Inalcanzable</string>
+    <string name="host_respondido">Host alcanzado: %1$s (%2$d ms)</string>
+    <string name="intentos">Intentos: %1$s</string>
+    <string name="boton_copiar_informe">Copiar Informe de Diagnóstico</string>
+    <string name="informe_copiado">Informe copiado ao portapapeis</string>
 </resources>
+

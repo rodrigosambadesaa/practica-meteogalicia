@@ -17,6 +17,7 @@ import gal.rodrigosambade.tempogalicia.R;
 import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
 import gal.rodrigosambade.tempogalicia.repository.ForecastRepository;
+import gal.rodrigosambade.tempogalicia.util.NetworkValidationManager;
 
 import net.i2p.android.router.util.ConnectivityAndInternetAccess;
 
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnSeleccionaLocalidad;
     private ImageButton ibtnTelefono;
+    private ImageButton ibtnDiagnosticoRed;
     private ImageButton ibtnInfo;
     private WebView webvPronostico;
     private TextView tvEstadoConexion;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         btnSeleccionaLocalidad = findViewById(R.id.btn_seleccionaLocalidad);
         webvPronostico = findViewById(R.id.webv_pronostico);
         ibtnTelefono = findViewById(R.id.ibtn_telefono);
+        ibtnDiagnosticoRed = findViewById(R.id.ibtn_diagnostico_red);
         ibtnInfo = findViewById(R.id.ibtn_info);
         tvEstadoConexion = findViewById(R.id.tv_estadoConexion);
 
@@ -64,9 +67,16 @@ public class MainActivity extends AppCompatActivity {
 
         btnSeleccionaLocalidad.setOnClickListener(view -> openMunicipalitySelector());
         ibtnTelefono.setOnClickListener(view -> dialOfficialContactPhone());
+        if (ibtnDiagnosticoRed != null) {
+            ibtnDiagnosticoRed.setOnClickListener(view -> openNetworkDiagnostics());
+        }
         if (ibtnInfo != null) {
             ibtnInfo.setOnClickListener(view -> showAboutDialog());
         }
+
+        tvEstadoConexion.setOnClickListener(view -> {
+            updateNetworkStateDisplay(ConnectivityAndInternetAccess.snapshotNetworkState(this));
+        });
 
         if (savedInstanceState != null) {
             selectedMunicipalityIndex = savedInstanceState.getInt(KEY_SELECTED_MUNICIPALITY_INDEX, -1);
@@ -135,30 +145,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateNetworkStateDisplay(ConnectivityAndInternetAccess.NetworkState state) {
-        if (state != null && state.isConnected() && state.isInternetValidated()) {
-            tvEstadoConexion.setText(R.string.conexion_conectado);
-            tvEstadoConexion.setTextColor(0xFF188038);
-        } else if (state != null && state.isConnected()) {
-            tvEstadoConexion.setText(R.string.conexion_disponible_sen_validar);
-            tvEstadoConexion.setTextColor(0xFFB06000);
-            if (activeProbeRequest != null) {
-                activeProbeRequest.cancel();
-            }
-            activeProbeRequest = ConnectivityAndInternetAccess.checkInternetAsyncDefault(this, result -> {
-                if (!isFinishing() && !isDestroyed()) {
-                    if (result != null && result.isReachable()) {
-                        tvEstadoConexion.setText(R.string.conexion_conectado);
-                        tvEstadoConexion.setTextColor(0xFF188038);
-                    } else {
-                        tvEstadoConexion.setText(R.string.conexion_sen_conexion);
-                        tvEstadoConexion.setTextColor(0xFFB3261E);
-                    }
-                }
-            });
-        } else {
+        if (state == null || !state.isConnected()) {
             tvEstadoConexion.setText(R.string.conexion_sen_conexion);
             tvEstadoConexion.setTextColor(0xFFB3261E);
+            return;
         }
+
+        if (state.isCaptivePortalDetected()) {
+            tvEstadoConexion.setText(R.string.conexion_portal_cautivo);
+            tvEstadoConexion.setTextColor(0xFFB06000);
+            return;
+        }
+
+        tvEstadoConexion.setText(R.string.conexion_disponible_sen_validar);
+        tvEstadoConexion.setTextColor(0xFFB06000);
+
+        if (activeProbeRequest != null) {
+            activeProbeRequest.cancel();
+        }
+
+        activeProbeRequest = NetworkValidationManager.checkMeteoGaliciaDomainAsync(this, result -> {
+            if (!isFinishing() && !isDestroyed()) {
+                if (result != null && result.isReachable()) {
+                    tvEstadoConexion.setText(R.string.conexion_conectado);
+                    tvEstadoConexion.setTextColor(0xFF188038);
+                } else {
+                    tvEstadoConexion.setText(R.string.conexion_dominios_inalcanzables);
+                    tvEstadoConexion.setTextColor(0xFFB06000);
+                }
+            }
+        });
     }
 
     private void openMunicipalitySelector() {
@@ -262,22 +278,29 @@ public class MainActivity extends AppCompatActivity {
     private void loadForecast(Municipality municipality) {
         if (!ConnectivityAndInternetAccess.isConnected(this)) {
             Toast.makeText(this, R.string.error_sen_conexion, Toast.LENGTH_SHORT).show();
+            showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
             return;
         }
 
         btnSeleccionaLocalidad.setEnabled(false);
-        btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
+        btnSeleccionaLocalidad.setText(R.string.comprobando_dominios);
 
-        ConnectivityAndInternetAccess.checkInternetAsyncDefault(this, result -> {
+        // Validación asíncrona explícita de dominios de MeteoGalicia antes de realizar a petición
+        NetworkValidationManager.checkMeteoGaliciaDomainAsync(this, result -> {
             if (isFinishing() || isDestroyed()) return;
 
             if (result == null || !result.isReachable()) {
                 btnSeleccionaLocalidad.setEnabled(true);
                 btnSeleccionaLocalidad.setText(municipality.getName());
-                Toast.makeText(MainActivity.this, R.string.error_sen_conexion, Toast.LENGTH_SHORT).show();
                 updateNetworkStateDisplay(ConnectivityAndInternetAccess.snapshotNetworkState(MainActivity.this));
+
+                String errorMsg = getString(R.string.error_dominios_meteogalicia,
+                        result != null ? result.getAttemptedHosts().toString() : "hosts desconoñecidos");
+                showNetworkFailureDialog(municipality, errorMsg);
                 return;
             }
+
+            btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
             forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
                 @Override
@@ -302,6 +325,47 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    private void showNetworkFailureDialog(Municipality municipality, String reasonMessage) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.atencion_titulo)
+                .setMessage(reasonMessage)
+                .setPositiveButton(R.string.boton_reintentar, (dialog, which) -> loadForecast(municipality))
+                .setNeutralButton(R.string.boton_datos_offline, (dialog, which) -> fetchOfflineForecastFallback(municipality))
+                .setNegativeButton(R.string.boton_diagnostico, (dialog, which) -> openNetworkDiagnostics())
+                .show();
+    }
+
+    private void fetchOfflineForecastFallback(Municipality municipality) {
+        btnSeleccionaLocalidad.setEnabled(false);
+        btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
+
+        forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
+            @Override
+            public void onSuccess(Forecast forecast, String htmlContent) {
+                currentHtmlContent = htmlContent;
+                btnSeleccionaLocalidad.setEnabled(true);
+                btnSeleccionaLocalidad.setText(municipality.getName());
+                webvPronostico.loadDataWithBaseURL(
+                        "https://servizos.meteogalicia.gal/",
+                        htmlContent,
+                        "text/html",
+                        "UTF-8",
+                        null);
+            }
+
+            @Override
+            public void onError(Exception exception) {
+                btnSeleccionaLocalidad.setEnabled(true);
+                btnSeleccionaLocalidad.setText(municipality.getName());
+            }
+        });
+    }
+
+    private void openNetworkDiagnostics() {
+        Intent intent = new Intent(this, NetworkDiagnosticsActivity.class);
+        startActivity(intent);
     }
 
     private void dialOfficialContactPhone() {
