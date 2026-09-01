@@ -10,16 +10,36 @@ android {
         applicationId "gal.rodrigosambade.tempogalicia"
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 2
+        versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            def releaseStoreFile = project.findProperty("MYAPP_RELEASE_STORE_FILE")
+            def releaseStorePassword = project.findProperty("MYAPP_RELEASE_STORE_PASSWORD")
+            def releaseKeyAlias = project.findProperty("MYAPP_RELEASE_KEY_ALIAS")
+            def releaseKeyPassword = project.findProperty("MYAPP_RELEASE_KEY_PASSWORD")
+
+            if (releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            } else {
+                // Keeps GitHub APK builds installable without committing credentials.
+                initWith signingConfigs.debug
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
