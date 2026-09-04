@@ -85,15 +85,14 @@ public class NetworkDiagnosticsActivity extends AppCompatActivity {
                 ConnectivityAndInternetAccess.snapshotNetworkState(this);
 
         String ifaceName = NetworkValidationManager.getActiveInterfaceName(this);
-        boolean isValidated = ConnectivityAndInternetAccess.isInternetValidated(this);
-        boolean isCaptive = ConnectivityAndInternetAccess.isCaptivePortalDetected(this);
         boolean isFast = ConnectivityAndInternetAccess.isConnectedFast(this);
 
         StringBuilder sb = new StringBuilder();
         sb.append("• ").append(getString(R.string.estado_interfaz)).append(": ").append(ifaceName).append("\n");
         sb.append("• Conectado: ").append(state.isConnected() ? getString(R.string.si) : getString(R.string.no)).append("\n");
-        sb.append("• ").append(getString(R.string.estado_validado_so)).append(": ").append(isValidated ? getString(R.string.si) : getString(R.string.no)).append("\n");
-        sb.append("• ").append(getString(R.string.estado_portal_cautivo)).append(": ").append(isCaptive ? getString(R.string.detectado) : getString(R.string.sen_detectar)).append("\n");
+        sb.append("• ").append(getString(R.string.estado_validado_so)).append(": ").append(state.isInternetValidated() ? getString(R.string.si) : getString(R.string.no)).append("\n");
+        sb.append("• ").append(getString(R.string.estado_portal_cautivo)).append(": ").append(state.isCaptivePortalDetected() ? getString(R.string.detectado) : getString(R.string.sen_detectar)).append("\n");
+        sb.append("• Intento atascado: ").append(ConnectivityAndInternetAccess.isConnectionAttemptStalled(this) ? getString(R.string.si) : getString(R.string.no)).append("\n");
         sb.append("• ").append(getString(R.string.estado_velocidade)).append(": ").append(isFast ? getString(R.string.rapida) : getString(R.string.lenta));
 
         tvInterfaceInfo.setText(sb.toString());

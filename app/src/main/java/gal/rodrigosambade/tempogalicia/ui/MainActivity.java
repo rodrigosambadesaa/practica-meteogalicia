@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvEstadoConexion;
 
     private ConnectivityAndInternetAccess.NetworkObserver networkObserver;
-    private ConnectivityAndInternetAccess.Request activeProbeRequest;
     private ForecastRepository forecastRepository;
 
     private int selectedMunicipalityIndex = -1;
@@ -138,10 +137,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if (activeProbeRequest != null) {
-            activeProbeRequest.cancel();
-            activeProbeRequest = null;
-        }
         if (networkObserver != null) {
             networkObserver.close();
             networkObserver = null;
@@ -151,10 +146,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (activeProbeRequest != null) {
-            activeProbeRequest.cancel();
-            activeProbeRequest = null;
-        }
         if (forecastRepository != null) {
             forecastRepository.shutdown();
         }
@@ -174,24 +165,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        tvEstadoConexion.setText(R.string.conexion_disponible_sen_validar);
-        tvEstadoConexion.setTextColor(0xFFB06000);
-
-        if (activeProbeRequest != null) {
-            activeProbeRequest.cancel();
+        if (state.isInternetValidated()) {
+            tvEstadoConexion.setText(R.string.conexion_conectado);
+            tvEstadoConexion.setTextColor(0xFF188038);
+        } else {
+            // The passive snapshot does not generate DNS/HTTP traffic. The
+            // MeteoGalicia probe remains explicit in loadForecast().
+            tvEstadoConexion.setText(R.string.conexion_disponible_sen_validar);
+            tvEstadoConexion.setTextColor(0xFFB06000);
         }
-
-        activeProbeRequest = NetworkValidationManager.checkMeteoGaliciaDomainAsync(this, result -> {
-            if (!isFinishing() && !isDestroyed()) {
-                if (result != null && result.isReachable()) {
-                    tvEstadoConexion.setText(R.string.conexion_conectado);
-                    tvEstadoConexion.setTextColor(0xFF188038);
-                } else {
-                    tvEstadoConexion.setText(R.string.conexion_dominios_inalcanzables);
-                    tvEstadoConexion.setTextColor(0xFFB06000);
-                }
-            }
-        });
     }
 
     private void openMunicipalitySelector() {
