@@ -1351,6 +1351,12 @@ public final class ConnectivityAndInternetAccess {
                 tlsStrategy != null ? tlsStrategy : new DefaultTlsProbe();
         final Request request = new Request();
 
+        if (!isConnected(appContext) || !hasPhysicalNetwork(appContext)) {
+            MAIN_HANDLER.post(() -> callback.onResult(
+                    new InternetResult(false, null, Collections.emptyList(), 0L)));
+            return request;
+        }
+
         Future<?> future = EXECUTOR.submit(() -> {
             InternetResult result = executeBlocking(
                     appContext,
@@ -1399,6 +1405,12 @@ public final class ConnectivityAndInternetAccess {
         final HttpProbeStrategy effectiveHttpStrategy =
                 httpStrategy != null ? httpStrategy : new DefaultHttpProbe();
         final Request request = new Request();
+
+        if (!isConnected(appContext) || !hasPhysicalNetwork(appContext)) {
+            MAIN_HANDLER.post(() -> callback.onResult(
+                    new InternetResult(false, null, Collections.emptyList(), 0L)));
+            return request;
+        }
 
         Future<?> future = EXECUTOR.submit(() -> {
             InternetResult result = executeBlocking(
@@ -1475,7 +1487,7 @@ public final class ConnectivityAndInternetAccess {
                         attempted,
                         SystemClock.elapsedRealtime() - started);
             }
-        } else if (!isConnected(context)) {
+        } else if (!isConnected(context) || !hasPhysicalNetwork(context)) {
             return new InternetResult(
                     false,
                     null,
