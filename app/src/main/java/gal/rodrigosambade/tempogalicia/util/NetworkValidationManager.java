@@ -13,6 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import gal.rodrigosambade.tempogalicia.api.MeteoGaliciaApiClient;
+import gal.rodrigosambade.tempogalicia.model.Municipality;
+
 /**
  * Xestor de validaciones de rede e dominios para as actividades de Tempo Galicia,
  * encapsulando as comprobacións asíncronas de ConnectivityAndInternetAccess.
@@ -92,6 +95,20 @@ public final class NetworkValidationManager {
         return ConnectivityAndInternetAccess.checkInternetAsyncDefault(
                 context,
                 METEOGALICIA_PRIMARY_HOSTS,
+                callback);
+    }
+
+    /**
+     * Valida primero el recurso de predicción que la pantalla va a solicitar.
+     * Así una red conectada pero sin acceso a MeteoGalicia no dispara la descarga.
+     */
+    public static ConnectivityAndInternetAccess.Request checkForecastResourceAsync(
+            Context context,
+            Municipality municipality,
+            ConnectivityAndInternetAccess.InternetCallback callback) {
+        return ConnectivityAndInternetAccess.checkInternetAsyncDefault(
+                context,
+                Collections.singletonList(MeteoGaliciaApiClient.buildForecastUrl(municipality)),
                 callback);
     }
 

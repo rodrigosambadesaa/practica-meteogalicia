@@ -93,7 +93,7 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
             }
 
             ForecastRepository repository = new ForecastRepository();
-            repository.getForecast(defaultMunicipality, new ForecastRepository.ForecastCallback() {
+            repository.getForecast(context, defaultMunicipality, new ForecastRepository.ForecastCallback() {
                 @Override
                 public void onSuccess(Forecast forecast, String htmlContent) {
                     List<ForecastDay> days = forecast.getDays();

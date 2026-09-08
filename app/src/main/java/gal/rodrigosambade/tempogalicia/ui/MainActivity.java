@@ -153,7 +153,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateNetworkStateDisplay(ConnectivityAndInternetAccess.NetworkState state) {
-        if (state == null || !state.isConnected()) {
+        // El observer es pasivo y puede entregar un snapshot inmediatamente anterior
+        // a una caída. Confirmar siempre el estado actual antes de mostrar verde.
+        if (state == null || !ConnectivityAndInternetAccess.isConnected(this)) {
             tvEstadoConexion.setText(R.string.conexion_sen_conexion);
             tvEstadoConexion.setTextColor(0xFFB3261E);
             return;
@@ -285,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
         btnSeleccionaLocalidad.setText(R.string.comprobando_dominios);
 
         // Validación asíncrona explícita de dominios de MeteoGalicia antes de realizar a petición
-        NetworkValidationManager.checkMeteoGaliciaDomainAsync(this, result -> {
+        NetworkValidationManager.checkForecastResourceAsync(this, municipality, result -> {
             if (isFinishing() || isDestroyed()) return;
 
             if (result == null || !result.isReachable()) {
@@ -301,7 +303,14 @@ public class MainActivity extends AppCompatActivity {
 
             btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
-            forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
+            if (!ConnectivityAndInternetAccess.isConnected(MainActivity.this)) {
+                btnSeleccionaLocalidad.setEnabled(true);
+                btnSeleccionaLocalidad.setText(municipality.getName());
+                showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
+                return;
+            }
+
+            forecastRepository.getForecast(MainActivity.this, municipality, new ForecastRepository.ForecastCallback() {
                 @Override
                 public void onSuccess(Forecast forecast, String htmlContent) {
                     currentHtmlContent = htmlContent;
@@ -346,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
         btnSeleccionaLocalidad.setEnabled(false);
         btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
-        forecastRepository.getForecast(municipality, new ForecastRepository.ForecastCallback() {
+        forecastRepository.getForecast(this, municipality, new ForecastRepository.ForecastCallback() {
             @Override
             public void onSuccess(Forecast forecast, String htmlContent) {
                 currentHtmlContent = htmlContent;

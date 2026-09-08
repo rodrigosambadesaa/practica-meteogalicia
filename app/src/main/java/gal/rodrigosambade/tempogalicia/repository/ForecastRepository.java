@@ -1,5 +1,6 @@
 package gal.rodrigosambade.tempogalicia.repository;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -9,6 +10,7 @@ import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.ForecastDay;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
 import gal.rodrigosambade.tempogalicia.parser.ForecastParser;
+import net.i2p.android.router.util.ConnectivityAndInternetAccess;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,10 +48,19 @@ public class ForecastRepository {
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
 
-    public void getForecast(Municipality municipality, ForecastCallback callback) {
+    public void getForecast(Context context, Municipality municipality, ForecastCallback callback) {
+        if (context == null || !ConnectivityAndInternetAccess.isConnected(context)) {
+            deliverOfflineForecast(municipality, callback);
+            return;
+        }
+
         executor.execute(() -> {
             try {
-                String jsonRaw = apiClient.fetchForecastJson(municipality);
+                if (!ConnectivityAndInternetAccess.isConnected(context)) {
+                    deliverOfflineForecast(municipality, callback);
+                    return;
+                }
+                String jsonRaw = apiClient.fetchForecastJson(context, municipality);
                 Forecast forecast = parser.parseJson(municipality, jsonRaw);
                 String htmlContent = parser.renderHtmlForecast(forecast);
 
@@ -65,6 +76,16 @@ public class ForecastRepository {
                 }
             }
         });
+    }
+
+    private void deliverOfflineForecast(Municipality municipality, ForecastCallback callback) {
+        try {
+            Forecast fallbackForecast = generateFallbackForecast(municipality);
+            String htmlContent = parser.renderHtmlForecast(fallbackForecast);
+            mainHandler.post(() -> callback.onSuccess(fallbackForecast, htmlContent));
+        } catch (Exception exception) {
+            mainHandler.post(() -> callback.onError(exception));
+        }
     }
 
     private Forecast generateFallbackForecast(Municipality municipality) {

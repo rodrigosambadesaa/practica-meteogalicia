@@ -1,8 +1,10 @@
 package gal.rodrigosambade.tempogalicia.api;
 
+import android.content.Context;
 import android.util.Log;
 
 import gal.rodrigosambade.tempogalicia.model.Municipality;
+import net.i2p.android.router.util.ConnectivityAndInternetAccess;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,20 +32,29 @@ public class MeteoGaliciaApiClient {
         return BASE_URL_HTTPS + municipality.getCode();
     }
 
-    public String fetchForecastJson(Municipality municipality) throws IOException {
+    public String fetchForecastJson(Context context, Municipality municipality) throws IOException {
+        if (context == null || !ConnectivityAndInternetAccess.isConnected(context)) {
+            throw new IOException("No hay una red conectada");
+        }
         try {
-            return fetchWithRedirects(BASE_URL_HTTPS + municipality.getCode());
+            return fetchWithRedirects(context, BASE_URL_HTTPS + municipality.getCode());
         } catch (IOException e) {
             Log.w(TAG, "HTTPS request failed, retrying with HTTP fallback", e);
-            return fetchWithRedirects(BASE_URL_HTTP + municipality.getCode());
+            if (!ConnectivityAndInternetAccess.isConnected(context)) {
+                throw new IOException("La conexión se perdió durante la consulta", e);
+            }
+            return fetchWithRedirects(context, BASE_URL_HTTP + municipality.getCode());
         }
     }
 
-    private String fetchWithRedirects(String initialUrl) throws IOException {
+    private String fetchWithRedirects(Context context, String initialUrl) throws IOException {
         String currentUrl = initialUrl;
         String cookie = null;
 
         for (int redirectCount = 0; redirectCount < 5; redirectCount++) {
+            if (!ConnectivityAndInternetAccess.isConnected(context)) {
+                throw new IOException("No hay una red conectada");
+            }
             URL url = new URL(currentUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             try {
