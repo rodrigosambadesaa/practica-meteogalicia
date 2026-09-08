@@ -82,6 +82,13 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.tv_widget_municipality, defaultMunicipality.getName());
 
         // Comprobación asíncrona de conectividade cos dominios de MeteoGalicia
+        if (!canStartRemoteRequest(context)) {
+            views.setTextViewText(R.id.tv_widget_status, "Datos offline (Sen conexión)");
+            views.setTextColor(R.id.tv_widget_status, 0xFFFFCDD2);
+            appWidgetManager.updateAppWidget(appWidgetId, views);
+            return;
+        }
+
         NetworkValidationManager.checkMeteoGaliciaDomainAsync(context, result -> {
             boolean reachable = result != null && result.isReachable();
             if (reachable) {
@@ -117,5 +124,11 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
         });
 
         appWidgetManager.updateAppWidget(appWidgetId, views);
+    }
+
+    private static boolean canStartRemoteRequest(Context context) {
+        return context != null
+                && net.i2p.android.router.util.ConnectivityAndInternetAccess.isConnected(context)
+                && net.i2p.android.router.util.ConnectivityAndInternetAccess.hasPhysicalNetwork(context);
     }
 }

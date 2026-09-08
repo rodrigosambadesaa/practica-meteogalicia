@@ -33,15 +33,15 @@ public class MeteoGaliciaApiClient {
     }
 
     public String fetchForecastJson(Context context, Municipality municipality) throws IOException {
-        if (context == null || !ConnectivityAndInternetAccess.isConnected(context)) {
-            throw new IOException("No hay una red conectada");
+        if (!canStartRemoteRequest(context)) {
+            throw new IOException("No hay una red física utilizable");
         }
         try {
             return fetchWithRedirects(context, BASE_URL_HTTPS + municipality.getCode());
         } catch (IOException e) {
             Log.w(TAG, "HTTPS request failed, retrying with HTTP fallback", e);
-            if (!ConnectivityAndInternetAccess.isConnected(context)) {
-                throw new IOException("La conexión se perdió durante la consulta", e);
+            if (!canStartRemoteRequest(context)) {
+                throw new IOException("La conexión física se perdió durante la consulta", e);
             }
             return fetchWithRedirects(context, BASE_URL_HTTP + municipality.getCode());
         }
@@ -52,8 +52,8 @@ public class MeteoGaliciaApiClient {
         String cookie = null;
 
         for (int redirectCount = 0; redirectCount < 5; redirectCount++) {
-            if (!ConnectivityAndInternetAccess.isConnected(context)) {
-                throw new IOException("No hay una red conectada");
+            if (!canStartRemoteRequest(context)) {
+                throw new IOException("No hay una red física utilizable");
             }
             URL url = new URL(currentUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -103,6 +103,12 @@ public class MeteoGaliciaApiClient {
             }
         }
         throw new IOException("Too many redirects fetching MeteoGalicia forecast");
+    }
+
+    private static boolean canStartRemoteRequest(Context context) {
+        return context != null
+                && ConnectivityAndInternetAccess.isConnected(context)
+                && ConnectivityAndInternetAccess.hasPhysicalNetwork(context);
     }
 
     private String readInputStream(InputStream inputStream) throws IOException {

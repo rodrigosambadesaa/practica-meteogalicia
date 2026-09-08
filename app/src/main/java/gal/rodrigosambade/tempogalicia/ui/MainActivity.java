@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateNetworkStateDisplay(ConnectivityAndInternetAccess.NetworkState state) {
         // El observer es pasivo y puede entregar un snapshot inmediatamente anterior
         // a una caída. Confirmar siempre el estado actual antes de mostrar verde.
-        if (state == null || !ConnectivityAndInternetAccess.isConnected(this)) {
+        if (state == null || !canStartRemoteRequest()) {
             tvEstadoConexion.setText(R.string.conexion_sen_conexion);
             tvEstadoConexion.setTextColor(0xFFB3261E);
             return;
@@ -277,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadForecast(Municipality municipality) {
-        if (!ConnectivityAndInternetAccess.isConnected(this)) {
+        if (!canStartRemoteRequest()) {
             Toast.makeText(this, R.string.error_sen_conexion, Toast.LENGTH_SHORT).show();
             showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
             return;
@@ -303,7 +303,7 @@ public class MainActivity extends AppCompatActivity {
 
             btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
-            if (!ConnectivityAndInternetAccess.isConnected(MainActivity.this)) {
+            if (!canStartRemoteRequest()) {
                 btnSeleccionaLocalidad.setEnabled(true);
                 btnSeleccionaLocalidad.setText(municipality.getName());
                 showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
@@ -383,6 +383,11 @@ public class MainActivity extends AppCompatActivity {
     private void openNetworkDiagnostics() {
         Intent intent = new Intent(this, NetworkDiagnosticsActivity.class);
         startActivity(intent);
+    }
+
+    private boolean canStartRemoteRequest() {
+        return ConnectivityAndInternetAccess.isConnected(this)
+                && ConnectivityAndInternetAccess.hasPhysicalNetwork(this);
     }
 
     private void dialOfficialContactPhone() {

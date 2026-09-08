@@ -87,6 +87,21 @@ public final class NetworkValidationManager {
     }
 
     /**
+     * A VPN local pode manter isConnected() a true sen deixar ningún transporte
+     * físico utilizable. Esta é a política común para iniciar novas peticións.
+     */
+    public static boolean canStartRemoteRequest(Context context) {
+        return context != null
+                && remoteRequestAllowed(
+                ConnectivityAndInternetAccess.isConnected(context),
+                ConnectivityAndInternetAccess.hasPhysicalNetwork(context));
+    }
+
+    static boolean remoteRequestAllowed(boolean connected, boolean physicalNetwork) {
+        return connected && physicalNetwork;
+    }
+
+    /**
      * Comproba asíncronamente a conectividade cos dominios de MeteoGalicia.
      */
     public static ConnectivityAndInternetAccess.Request checkMeteoGaliciaDomainAsync(
@@ -205,6 +220,9 @@ public final class NetworkValidationManager {
      * Devolve unha cadea lexible co resumo da interfaz activa.
      */
     public static String getActiveInterfaceName(Context context) {
+        if (!ConnectivityAndInternetAccess.hasPhysicalNetwork(context)) {
+            return "Sen transporte físico";
+        }
         if (ConnectivityAndInternetAccess.vpnActive(context)) {
             return "VPN";
         }

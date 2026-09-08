@@ -49,14 +49,14 @@ public class ForecastRepository {
     }
 
     public void getForecast(Context context, Municipality municipality, ForecastCallback callback) {
-        if (context == null || !ConnectivityAndInternetAccess.isConnected(context)) {
+        if (!canStartRemoteRequest(context)) {
             deliverOfflineForecast(municipality, callback);
             return;
         }
 
         executor.execute(() -> {
             try {
-                if (!ConnectivityAndInternetAccess.isConnected(context)) {
+                if (!canStartRemoteRequest(context)) {
                     deliverOfflineForecast(municipality, callback);
                     return;
                 }
@@ -107,5 +107,11 @@ public class ForecastRepository {
 
     public void shutdown() {
         executor.shutdown();
+    }
+
+    private static boolean canStartRemoteRequest(Context context) {
+        return context != null
+                && ConnectivityAndInternetAccess.isConnected(context)
+                && ConnectivityAndInternetAccess.hasPhysicalNetwork(context);
     }
 }

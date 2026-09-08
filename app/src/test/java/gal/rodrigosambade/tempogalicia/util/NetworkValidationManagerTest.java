@@ -32,4 +32,16 @@ public class NetworkValidationManagerTest {
         assertTrue(resolvers.contains("1.1.1.1"));
         assertTrue(resolvers.contains("8.8.8.8"));
     }
+
+    @Test
+    public void testRemoteRequestPolicyForVpnAndPhysicalTransports() {
+        // Caso A: conexión normal.
+        assertTrue(NetworkValidationManager.remoteRequestAllowed(true, true));
+        // Caso B: VPN sobre Wi-Fi/celular utilizable.
+        assertTrue(NetworkValidationManager.remoteRequestAllowed(true, true));
+        // Caso C: VPN-only colgante: isConnected puede ser true, pero no hay transporte.
+        assertFalse(NetworkValidationManager.remoteRequestAllowed(true, false));
+        // Caso E: sin VPN y sin red.
+        assertFalse(NetworkValidationManager.remoteRequestAllowed(false, false));
+    }
 }

@@ -86,10 +86,12 @@ public class NetworkDiagnosticsActivity extends AppCompatActivity {
 
         String ifaceName = NetworkValidationManager.getActiveInterfaceName(this);
         boolean isFast = ConnectivityAndInternetAccess.isConnectedFast(this);
+        boolean canStartRemoteRequest = ConnectivityAndInternetAccess.isConnected(this)
+                && ConnectivityAndInternetAccess.hasPhysicalNetwork(this);
 
         StringBuilder sb = new StringBuilder();
         sb.append("• ").append(getString(R.string.estado_interfaz)).append(": ").append(ifaceName).append("\n");
-        sb.append("• Conectado: ").append(state.isConnected() ? getString(R.string.si) : getString(R.string.no)).append("\n");
+        sb.append("• Conectado: ").append(canStartRemoteRequest ? getString(R.string.si) : getString(R.string.no)).append("\n");
         sb.append("• ").append(getString(R.string.estado_validado_so)).append(": ").append(state.isInternetValidated() ? getString(R.string.si) : getString(R.string.no)).append("\n");
         sb.append("• ").append(getString(R.string.estado_portal_cautivo)).append(": ").append(state.isCaptivePortalDetected() ? getString(R.string.detectado) : getString(R.string.sen_detectar)).append("\n");
         sb.append("• Intento atascado: ").append(ConnectivityAndInternetAccess.isConnectionAttemptStalled(this) ? getString(R.string.si) : getString(R.string.no)).append("\n");
