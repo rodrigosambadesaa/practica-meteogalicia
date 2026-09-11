@@ -10,9 +10,11 @@ import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.ForecastDay;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
 import gal.rodrigosambade.tempogalicia.parser.ForecastParser;
+import gal.rodrigosambade.tempogalicia.util.NetworkValidationManager;
 import net.i2p.android.router.util.ConnectivityAndInternetAccess;
 
 import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -30,6 +32,21 @@ public class ForecastRepository {
     public interface ForecastCallback {
         void onSuccess(Forecast forecast, String htmlContent);
         void onError(Exception exception);
+    }
+
+    public static final class NetworkFailureException extends Exception {
+        private final boolean internetReachable;
+        private final boolean captivePortal;
+
+        public NetworkFailureException(Throwable cause, boolean internetReachable,
+                                       boolean captivePortal) {
+            super(cause);
+            this.internetReachable = internetReachable;
+            this.captivePortal = captivePortal;
+        }
+
+        public boolean isInternetReachable() { return internetReachable; }
+        public boolean isCaptivePortal() { return captivePortal; }
     }
 
     private final MeteoGaliciaApiClient apiClient;
@@ -57,7 +74,7 @@ public class ForecastRepository {
         executor.execute(() -> {
             try {
                 if (!canStartRemoteRequest(context)) {
-                    deliverOfflineForecast(municipality, callback);
+                    mainHandler.post(() -> callback.onError(new IOException("No hay red utilizable")));
                     return;
                 }
                 String jsonRaw = apiClient.fetchForecastJson(context, municipality);
@@ -66,14 +83,19 @@ public class ForecastRepository {
 
                 mainHandler.post(() -> callback.onSuccess(forecast, htmlContent));
             } catch (Exception e) {
-                Log.w(TAG, "Fallo de rede ou API de MeteoGalicia (" + e.getMessage() + "). xerando datos de reserva offline.", e);
-                try {
-                    Forecast fallbackForecast = generateFallbackForecast(municipality);
-                    String htmlContent = parser.renderHtmlForecast(fallbackForecast);
-                    mainHandler.post(() -> callback.onSuccess(fallbackForecast, htmlContent));
-                } catch (Exception fallbackErr) {
+                Log.w(TAG, "Falló la petición real de MeteoGalicia", e);
+                if (e instanceof MeteoGaliciaApiClient.BackendHttpException
+                        || !NetworkValidationManager.isTransportFailure(e)) {
                     mainHandler.post(() -> callback.onError(e));
+                    return;
                 }
+
+                NetworkValidationManager.checkGeneralInternetAsync(context, result -> {
+                    boolean reachable = result != null && result.isReachable();
+                    boolean captive = ConnectivityAndInternetAccess
+                            .snapshotNetworkState(context).isCaptivePortalDetected();
+                    callback.onError(new NetworkFailureException(e, reachable, captive));
+                });
             }
         });
     }
@@ -110,8 +132,6 @@ public class ForecastRepository {
     }
 
     private static boolean canStartRemoteRequest(Context context) {
-        return context != null
-                && ConnectivityAndInternetAccess.isConnected(context)
-                && ConnectivityAndInternetAccess.hasPhysicalNetwork(context);
+        return NetworkValidationManager.canStartRemoteRequest(context);
     }
 }

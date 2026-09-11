@@ -24,6 +24,9 @@
     <string name="error_sen_conexion">Non hai conexión dispoñible</string>
     <string name="error_dominios_meteogalicia">Non se puido conectar cos servidores de MeteoGalicia (%1$s)</string>
     <string name="error_obtenendo_pronostico">Non se puido obter o pronóstico. Inténteo de novo.</string>
+    <string name="error_internet_no_disponible">Non se pode acceder a Internet.</string>
+    <string name="error_backend_no_disponible">Hai conexión a Internet, pero o servizo non está dispoñible.</string>
+    <string name="error_portal_cautivo">A rede require iniciar sesión para acceder a Internet.</string>
     <string name="error_aplicacion_telefono">Non hai aplicación de teléfono dispoñible no dispositivo.</string>
 
     <string name="atencion_titulo">Atención</string>
@@ -73,5 +76,4 @@
 
     <string name="widget_nome">Tempo Galicia – Previsión</string>
 </resources>
-
 

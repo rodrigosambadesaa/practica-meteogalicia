@@ -18,10 +18,8 @@ public class NetworkValidationManagerTest {
     public void testPrimaryHostsConfiguration() {
         List<String> hosts = NetworkValidationManager.METEOGALICIA_PRIMARY_HOSTS;
         assertNotNull(hosts);
-        assertEquals(3, hosts.size());
+        assertEquals(1, hosts.size());
         assertTrue(hosts.contains("https://servizos.meteogalicia.gal/"));
-        assertTrue(hosts.contains("https://www.meteogalicia.gal/"));
-        assertTrue(hosts.contains("https://www.xunta.gal/"));
     }
 
     @Test

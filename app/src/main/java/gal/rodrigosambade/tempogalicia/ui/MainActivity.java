@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import gal.rodrigosambade.tempogalicia.R;
+import gal.rodrigosambade.tempogalicia.api.MeteoGaliciaApiClient;
 import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
 import gal.rodrigosambade.tempogalicia.notification.WeatherNotificationHelper;
@@ -284,33 +285,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnSeleccionaLocalidad.setEnabled(false);
-        btnSeleccionaLocalidad.setText(R.string.comprobando_dominios);
+        btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
 
-        // Validación asíncrona explícita de dominios de MeteoGalicia antes de realizar a petición
-        NetworkValidationManager.checkForecastResourceAsync(this, municipality, result -> {
-            if (isFinishing() || isDestroyed()) return;
-
-            if (result == null || !result.isReachable()) {
-                btnSeleccionaLocalidad.setEnabled(true);
-                btnSeleccionaLocalidad.setText(municipality.getName());
-                updateNetworkStateDisplay(ConnectivityAndInternetAccess.snapshotNetworkState(MainActivity.this));
-
-                String errorMsg = getString(R.string.error_dominios_meteogalicia,
-                        result != null ? result.getAttemptedHosts().toString() : "hosts desconoñecidos");
-                showNetworkFailureDialog(municipality, errorMsg);
-                return;
-            }
-
-            btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
-
-            if (!canStartRemoteRequest()) {
-                btnSeleccionaLocalidad.setEnabled(true);
-                btnSeleccionaLocalidad.setText(municipality.getName());
-                showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
-                return;
-            }
-
-            forecastRepository.getForecast(MainActivity.this, municipality, new ForecastRepository.ForecastCallback() {
+        // La petición real al backend es el primer chequeo específico; no se duplica
+        // con un health check previo que podría quedar obsoleto inmediatamente.
+        forecastRepository.getForecast(MainActivity.this, municipality, new ForecastRepository.ForecastCallback() {
                 @Override
                 public void onSuccess(Forecast forecast, String htmlContent) {
                     currentHtmlContent = htmlContent;
@@ -333,10 +312,25 @@ public class MainActivity extends AppCompatActivity {
                     android.util.Log.e("MainActivity", "Error fetching forecast from MeteoGalicia", exception);
                     btnSeleccionaLocalidad.setEnabled(true);
                     btnSeleccionaLocalidad.setText(municipality.getName());
-                    Toast.makeText(MainActivity.this, R.string.error_obtenendo_pronostico, Toast.LENGTH_LONG).show();
+                    if (exception instanceof ForecastRepository.NetworkFailureException) {
+                        ForecastRepository.NetworkFailureException failure =
+                                (ForecastRepository.NetworkFailureException) exception;
+                        int message = failure.isCaptivePortal()
+                                ? R.string.error_portal_cautivo
+                                : (failure.isInternetReachable()
+                                ? R.string.error_backend_no_disponible
+                                : R.string.error_internet_no_disponible);
+                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                        showNetworkFailureDialog(municipality, getString(message));
+                    } else if (exception instanceof MeteoGaliciaApiClient.BackendHttpException) {
+                        Toast.makeText(MainActivity.this,
+                                R.string.error_backend_no_disponible, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(MainActivity.this,
+                                R.string.error_obtenendo_pronostico, Toast.LENGTH_LONG).show();
+                    }
                 }
             });
-        });
     }
 
     private void showNetworkFailureDialog(Municipality municipality, String reasonMessage) {
@@ -386,8 +380,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean canStartRemoteRequest() {
-        return ConnectivityAndInternetAccess.isConnected(this)
-                && ConnectivityAndInternetAccess.hasPhysicalNetwork(this);
+        return NetworkValidationManager.canStartRemoteRequest(this);
     }
 
     private void dialOfficialContactPhone() {

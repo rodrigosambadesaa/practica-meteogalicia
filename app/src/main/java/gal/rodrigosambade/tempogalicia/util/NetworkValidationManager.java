@@ -12,6 +12,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import gal.rodrigosambade.tempogalicia.api.MeteoGaliciaApiClient;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
@@ -23,13 +28,9 @@ import gal.rodrigosambade.tempogalicia.model.Municipality;
 public final class NetworkValidationManager {
 
     public static final String HOST_METEOGALICIA_API = "https://servizos.meteogalicia.gal/";
-    public static final String HOST_METEOGALICIA_WEB = "https://www.meteogalicia.gal/";
-    public static final String HOST_XUNTA_WEB = "https://www.xunta.gal/";
 
     public static final List<String> METEOGALICIA_PRIMARY_HOSTS = Collections.unmodifiableList(Arrays.asList(
-            HOST_METEOGALICIA_API,
-            HOST_METEOGALICIA_WEB,
-            HOST_XUNTA_WEB
+            HOST_METEOGALICIA_API
     ));
 
     public static final List<String> DEFAULT_DNS_RESOLVERS = Collections.unmodifiableList(Arrays.asList(
@@ -114,6 +115,32 @@ public final class NetworkValidationManager {
     }
 
     /**
+     * Diagnóstico global reservado para el fallback de una operación real que falló
+     * por transporte. No se ejecuta como preflight normal de la API.
+     */
+    public static ConnectivityAndInternetAccess.Request checkGeneralInternetAsync(
+            Context context,
+            ConnectivityAndInternetAccess.InternetCallback callback) {
+        return ConnectivityAndInternetAccess.checkInternetAsyncDefault(context, callback);
+    }
+
+    public static boolean isTransportFailure(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof UnknownHostException
+                    || current instanceof SocketTimeoutException
+                    || current instanceof SocketException
+                    || current instanceof ConnectException
+                    || current instanceof java.net.NoRouteToHostException
+                    || current instanceof IOException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    /**
      * Valida primero el recurso de predicción que la pantalla va a solicitar.
      * Así una red conectada pero sin acceso a MeteoGalicia no dispara la descarga.
      */
@@ -177,43 +204,62 @@ public final class NetworkValidationManager {
         final Map<String, ConnectivityAndInternetAccess.InternetResult> resultsMap = new LinkedHashMap<>();
         final Handler handler = new Handler(Looper.getMainLooper());
 
-        // Comprobación de MeteoGalicia API & Web
+        // La operación manual de diagnóstico comienza por el backend real.
         return ConnectivityAndInternetAccess.checkInternetAsyncDefault(
                 appContext,
-                DEFAULT_DNS_RESOLVERS,
                 METEOGALICIA_PRIMARY_HOSTS,
                 resultApi -> {
                     resultsMap.put("MeteoGalicia", resultApi);
 
-                    // Comprobación de Portal Cautivo Estrito
-                    ConnectivityAndInternetAccess strictChecker =
-                            ConnectivityAndInternetAccess.strictCaptivePortalBuilder().build();
+                    if (resultApi == null || !resultApi.isReachable()) {
+                        runFallbackDiagnostics(appContext, resultsMap, snapshot, wifi, mobile,
+                                ethernet, vpn, airplane, fast, handler, callback);
+                        return;
+                    }
 
-                    strictChecker.checkInternetAsync(appContext, resultCaptive -> {
-                        resultsMap.put("CaptivePortalProbe", resultCaptive);
-
-                        // Comprobación xeral fallback de conectividade
-                        ConnectivityAndInternetAccess.checkInternetAsyncDefault(
-                                appContext,
-                                resultGlobal -> {
-                                    resultsMap.put("GlobalInternet", resultGlobal);
-
-                                    DiagnosticReport report = new DiagnosticReport(
-                                            snapshot,
-                                            wifi,
-                                            mobile,
-                                            ethernet,
-                                            vpn,
-                                            airplane,
-                                            fast,
-                                            resultsMap
-                                    );
-
-                                    handler.post(() -> callback.onCompleted(report));
-                                }
-                        );
-                    });
+                    publishReport(handler, callback, snapshot, wifi, mobile, ethernet,
+                            vpn, airplane, fast, resultsMap);
                 });
+    }
+
+    private static void runFallbackDiagnostics(
+            Context context,
+            Map<String, ConnectivityAndInternetAccess.InternetResult> resultsMap,
+            ConnectivityAndInternetAccess.NetworkState snapshot,
+            boolean wifi,
+            boolean mobile,
+            boolean ethernet,
+            boolean vpn,
+            boolean airplane,
+            boolean fast,
+            Handler handler,
+            DiagnosticsCallback callback) {
+        ConnectivityAndInternetAccess strictChecker =
+                ConnectivityAndInternetAccess.strictCaptivePortalBuilder().build();
+        strictChecker.checkInternetAsync(context, resultCaptive -> {
+            resultsMap.put("CaptivePortalProbe", resultCaptive);
+            checkGeneralInternetAsync(context, resultGlobal -> {
+                resultsMap.put("GlobalInternet", resultGlobal);
+                publishReport(handler, callback, snapshot, wifi, mobile, ethernet,
+                        vpn, airplane, fast, resultsMap);
+            });
+        });
+    }
+
+    private static void publishReport(
+            Handler handler,
+            DiagnosticsCallback callback,
+            ConnectivityAndInternetAccess.NetworkState snapshot,
+            boolean wifi,
+            boolean mobile,
+            boolean ethernet,
+            boolean vpn,
+            boolean airplane,
+            boolean fast,
+            Map<String, ConnectivityAndInternetAccess.InternetResult> resultsMap) {
+        DiagnosticReport report = new DiagnosticReport(snapshot, wifi, mobile, ethernet,
+                vpn, airplane, fast, resultsMap);
+        handler.post(() -> callback.onCompleted(report));
     }
 
     /**

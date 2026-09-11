@@ -20,10 +20,22 @@ public class MeteoGaliciaApiClient {
 
     private static final String TAG = "MeteoGaliciaApiClient";
     private static final String BASE_URL_HTTPS = "https://servizos.meteogalicia.gal/mgrss/predicion/jsonPredMedioPrazo.action?idConc=";
-    private static final String BASE_URL_HTTP = "http://servizos.meteogalicia.gal/mgrss/predicion/jsonPredMedioPrazo.action?idConc=";
     private static final int CONNECT_TIMEOUT_MS = 10000;
     private static final int READ_TIMEOUT_MS = 15000;
     private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14; SM-S938B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 TempoGalicia/1.0";
+
+    public static final class BackendHttpException extends IOException {
+        private final int responseCode;
+
+        public BackendHttpException(int responseCode, String url) {
+            super("MeteoGalicia respondió HTTP " + responseCode + " para " + url);
+            this.responseCode = responseCode;
+        }
+
+        public int getResponseCode() {
+            return responseCode;
+        }
+    }
 
     public static String buildForecastUrl(Municipality municipality) {
         if (municipality == null) {
@@ -36,15 +48,7 @@ public class MeteoGaliciaApiClient {
         if (!canStartRemoteRequest(context)) {
             throw new IOException("No hay una red física utilizable");
         }
-        try {
-            return fetchWithRedirects(context, BASE_URL_HTTPS + municipality.getCode());
-        } catch (IOException e) {
-            Log.w(TAG, "HTTPS request failed, retrying with HTTP fallback", e);
-            if (!canStartRemoteRequest(context)) {
-                throw new IOException("La conexión física se perdió durante la consulta", e);
-            }
-            return fetchWithRedirects(context, BASE_URL_HTTP + municipality.getCode());
-        }
+        return fetchWithRedirects(context, BASE_URL_HTTPS + municipality.getCode());
     }
 
     private String fetchWithRedirects(Context context, String initialUrl) throws IOException {
@@ -90,9 +94,9 @@ public class MeteoGaliciaApiClient {
                     }
                 }
 
-                if (responseCode != HttpURLConnection.HTTP_OK) {
+                if (responseCode < 200 || responseCode >= 300) {
                     Log.e(TAG, "MeteoGalicia API HTTP Error: " + responseCode + " for URL: " + currentUrl);
-                    throw new IOException("HTTP error from MeteoGalicia: " + responseCode);
+                    throw new BackendHttpException(responseCode, currentUrl);
                 }
 
                 try (InputStream inputStream = connection.getInputStream()) {

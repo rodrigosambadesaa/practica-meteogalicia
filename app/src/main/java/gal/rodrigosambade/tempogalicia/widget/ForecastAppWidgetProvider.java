@@ -81,7 +81,6 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
         Municipality defaultMunicipality = Municipality.getDefaultMunicipalities().get(0);
         views.setTextViewText(R.id.tv_widget_municipality, defaultMunicipality.getName());
 
-        // Comprobación asíncrona de conectividade cos dominios de MeteoGalicia
         if (!canStartRemoteRequest(context)) {
             views.setTextViewText(R.id.tv_widget_status, "Datos offline (Sen conexión)");
             views.setTextColor(R.id.tv_widget_status, 0xFFFFCDD2);
@@ -89,18 +88,8 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
             return;
         }
 
-        NetworkValidationManager.checkMeteoGaliciaDomainAsync(context, result -> {
-            boolean reachable = result != null && result.isReachable();
-            if (reachable) {
-                views.setTextViewText(R.id.tv_widget_status, "Conectado a MeteoGalicia");
-                views.setTextColor(R.id.tv_widget_status, 0xFFB9F6CA);
-            } else {
-                views.setTextViewText(R.id.tv_widget_status, "Datos offline (Sen conexión)");
-                views.setTextColor(R.id.tv_widget_status, 0xFFFFCDD2);
-            }
-
-            ForecastRepository repository = new ForecastRepository();
-            repository.getForecast(context, defaultMunicipality, new ForecastRepository.ForecastCallback() {
+        ForecastRepository repository = new ForecastRepository();
+        repository.getForecast(context, defaultMunicipality, new ForecastRepository.ForecastCallback() {
                 @Override
                 public void onSuccess(Forecast forecast, String htmlContent) {
                     List<ForecastDay> days = forecast.getDays();
@@ -111,16 +100,19 @@ public class ForecastAppWidgetProvider extends AppWidgetProvider {
                         views.setTextViewText(R.id.tv_widget_rain,
                                 "Prob. Choiva: " + today.getRainProbability() + "%");
                     }
+                    views.setTextViewText(R.id.tv_widget_status, "Conectado a MeteoGalicia");
+                    views.setTextColor(R.id.tv_widget_status, 0xFFB9F6CA);
                     appWidgetManager.updateAppWidget(appWidgetId, views);
                     repository.shutdown();
                 }
 
                 @Override
                 public void onError(Exception exception) {
+                    views.setTextViewText(R.id.tv_widget_status, "Servicio no disponible");
+                    views.setTextColor(R.id.tv_widget_status, 0xFFFFCDD2);
                     appWidgetManager.updateAppWidget(appWidgetId, views);
                     repository.shutdown();
                 }
-            });
         });
 
         appWidgetManager.updateAppWidget(appWidgetId, views);
