@@ -1,0 +1,96 @@
+name: Publish GitHub APK release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/build.gradle'
+      - '.github/workflows/publish-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read and validate Android version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]+"([^"]+)".*/\1/p' app/build.gradle | head -n 1)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected numeric semver in app/build.gradle; got '$version'" >&2
+            exit 1
+          fi
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Check whether release already exists
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'already_published=true' >> "$GITHUB_OUTPUT"
+            echo "Release $RELEASE_TAG already published; skipping."
+          else
+            echo 'already_published=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@v4
+        if: steps.existing.outputs.already_published == 'false'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        if: steps.existing.outputs.already_published == 'false'
+        with:
+          packages: "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.existing.outputs.already_published == 'false'
+      - name: Install Android API 36
+        if: steps.existing.outputs.already_published == 'false'
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - name: Test, lint and assemble release APK
+        if: steps.existing.outputs.already_published == 'false'
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon testDebugUnitTest lintDebug assembleRelease
+      - name: Publish GitHub release with installable APK
+        if: steps.existing.outputs.already_published == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="app/build/outputs/apk/release/app-release.apk"
+          test -s "$apk"
+          asset="TempoGalicia-${RELEASE_TAG}-debug-signed.apk"
+          cp "$apk" "$asset"
+          notes="docs/releases/${RELEASE_TAG}.md"
+          if [[ -f "$notes" ]]; then
+            gh release create "$RELEASE_TAG" "$asset" \
+              --target "$GITHUB_SHA" \
+              --title "TempoGalicia v${RELEASE_VERSION}" \
+              --notes-file "$notes" \
+              --latest
+          else
+            gh release create "$RELEASE_TAG" "$asset" \
+              --target "$GITHUB_SHA" \
+              --title "TempoGalicia v${RELEASE_VERSION}" \
+              --generate-notes \
+              --latest
+          fi
