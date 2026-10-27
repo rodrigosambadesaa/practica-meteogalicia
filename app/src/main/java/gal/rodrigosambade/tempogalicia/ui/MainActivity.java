@@ -2,6 +2,9 @@ package gal.rodrigosambade.tempogalicia.ui;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.text.InputType;
+import android.widget.EditText;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -24,6 +27,8 @@ import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
 import gal.rodrigosambade.tempogalicia.notification.WeatherNotificationHelper;
 import gal.rodrigosambade.tempogalicia.repository.ForecastRepository;
+import gal.rodrigosambade.tempogalicia.repository.WolframAlphaRepository;
+import gal.rodrigosambade.tempogalicia.api.WolframAlphaApiClient;
 import gal.rodrigosambade.tempogalicia.util.NetworkValidationManager;
 import gal.rodrigosambade.tempogalicia.widget.ForecastAppWidgetProvider;
 
@@ -38,8 +43,14 @@ public class MainActivity extends AppCompatActivity {
     private static final String OFFICIAL_METEOGALICIA_PHONE = "881999654";
     private static final String KEY_SELECTED_MUNICIPALITY_INDEX = "selected_municipality_index";
     private static final String KEY_FORECAST_HTML = "forecast_html";
+    private static final String KEY_SELECTED_SOURCE = "selected_source";
+    private static final String PREFS = "weather_settings";
+    private static final String APP_ID_KEY = "wolfram_app_id";
+    private static final int METEOGALICIA = 0;
+    private static final int WOLFRAM = 1;
 
     private Button btnSeleccionaLocalidad;
+    private Button btnSeleccionaFuente;
     private ImageButton ibtnTelefono;
     private ImageButton ibtnDiagnosticoRed;
     private ImageButton ibtnInfo;
@@ -48,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ConnectivityAndInternetAccess.NetworkObserver networkObserver;
     private ForecastRepository forecastRepository;
+    private WolframAlphaRepository wolframRepository;
+    private int selectedSource = METEOGALICIA;
+    private int requestGeneration = 0;
 
     private int selectedMunicipalityIndex = -1;
     private String currentHtmlContent = null;
@@ -60,6 +74,10 @@ public class MainActivity extends AppCompatActivity {
 
         municipalities = Municipality.getDefaultMunicipalities();
         forecastRepository = new ForecastRepository();
+        wolframRepository = new WolframAlphaRepository();
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        selectedSource = prefs.getInt(KEY_SELECTED_SOURCE, METEOGALICIA);
+        selectedMunicipalityIndex = prefs.getInt(KEY_SELECTED_MUNICIPALITY_INDEX, -1);
 
         // Inicializar canles de notificación
         WeatherNotificationHelper.createNotificationChannels(this);
@@ -72,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnSeleccionaLocalidad = findViewById(R.id.btn_seleccionaLocalidad);
+        btnSeleccionaFuente = findViewById(R.id.btn_seleccionaFuente);
         webvPronostico = findViewById(R.id.webv_pronostico);
         ibtnTelefono = findViewById(R.id.ibtn_telefono);
         ibtnDiagnosticoRed = findViewById(R.id.ibtn_diagnostico_red);
@@ -83,6 +102,10 @@ public class MainActivity extends AppCompatActivity {
         webvPronostico.getSettings().setDisplayZoomControls(false);
 
         btnSeleccionaLocalidad.setOnClickListener(view -> openMunicipalitySelector());
+        btnSeleccionaFuente.setOnClickListener(view -> openSourceSelector());
+        updateSourceLabel();
+        if (selectedMunicipalityIndex >= 0 && selectedMunicipalityIndex < municipalities.size())
+            btnSeleccionaLocalidad.setText(municipalities.get(selectedMunicipalityIndex).getName());
         ibtnTelefono.setOnClickListener(view -> dialOfficialContactPhone());
         if (ibtnDiagnosticoRed != null) {
             ibtnDiagnosticoRed.setOnClickListener(view -> openNetworkDiagnostics());
@@ -97,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             selectedMunicipalityIndex = savedInstanceState.getInt(KEY_SELECTED_MUNICIPALITY_INDEX, -1);
+            selectedSource = savedInstanceState.getInt(KEY_SELECTED_SOURCE, METEOGALICIA);
+            updateSourceLabel();
             currentHtmlContent = savedInstanceState.getString(KEY_FORECAST_HTML, null);
 
             if (selectedMunicipalityIndex >= 0 && selectedMunicipalityIndex < municipalities.size()) {
@@ -105,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
 
             if (currentHtmlContent != null) {
                 webvPronostico.loadDataWithBaseURL(
-                        "https://servizos.meteogalicia.gal/",
+                        selectedSource == METEOGALICIA
+                                ? "https://servizos.meteogalicia.gal/" : "https://api.wolframalpha.com/",
                         currentHtmlContent,
                         "text/html",
                         "UTF-8",
@@ -115,6 +141,8 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 webvPronostico.restoreState(savedInstanceState);
             }
+        } else if (selectedMunicipalityIndex >= 0 && selectedMunicipalityIndex < municipalities.size()) {
+            loadForecast(municipalities.get(selectedMunicipalityIndex));
         }
     }
 
@@ -122,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_SELECTED_MUNICIPALITY_INDEX, selectedMunicipalityIndex);
+        outState.putInt(KEY_SELECTED_SOURCE, selectedSource);
         if (currentHtmlContent != null) {
             outState.putString(KEY_FORECAST_HTML, currentHtmlContent);
         }
@@ -147,6 +176,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        ++requestGeneration;
+        if (wolframRepository != null) wolframRepository.shutdown();
         if (forecastRepository != null) {
             forecastRepository.shutdown();
         }
@@ -227,6 +258,8 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener((parent, view, position, id) -> {
             Municipality chosen = filteredList.get(position);
             selectedMunicipalityIndex = municipalities.indexOf(chosen);
+            getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                    .putInt(KEY_SELECTED_MUNICIPALITY_INDEX, selectedMunicipalityIndex).apply();
             dialog.dismiss();
             loadForecast(chosen);
         });
@@ -278,6 +311,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadForecast(Municipality municipality) {
+        final int generation = ++requestGeneration;
+        if (selectedSource == WOLFRAM) {
+            loadWolframForecast(municipality, generation);
+            return;
+        }
         if (!canStartRemoteRequest()) {
             Toast.makeText(this, R.string.error_sen_conexion, Toast.LENGTH_SHORT).show();
             showNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
@@ -292,6 +330,7 @@ public class MainActivity extends AppCompatActivity {
         forecastRepository.getForecast(MainActivity.this, municipality, new ForecastRepository.ForecastCallback() {
                 @Override
                 public void onSuccess(Forecast forecast, String htmlContent) {
+                    if (generation != requestGeneration || isFinishing() || isDestroyed()) return;
                     currentHtmlContent = htmlContent;
                     btnSeleccionaLocalidad.setEnabled(true);
                     btnSeleccionaLocalidad.setText(municipality.getName());
@@ -309,6 +348,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(Exception exception) {
+                    if (generation != requestGeneration || isFinishing() || isDestroyed()) return;
                     android.util.Log.e("MainActivity", "Error fetching forecast from MeteoGalicia", exception);
                     btnSeleccionaLocalidad.setEnabled(true);
                     btnSeleccionaLocalidad.setText(municipality.getName());
