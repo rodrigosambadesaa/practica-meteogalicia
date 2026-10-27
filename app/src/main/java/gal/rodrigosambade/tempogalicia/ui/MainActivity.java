@@ -373,6 +373,145 @@ public class MainActivity extends AppCompatActivity {
             });
     }
 
+
+    private void updateSourceLabel() {
+        btnSeleccionaFuente.setText(selectedSource == METEOGALICIA
+                ? R.string.fuente_meteogalicia : R.string.fuente_wolfram);
+    }
+
+    private void openSourceSelector() {
+        String[] choices = {getString(R.string.fuente_meteogalicia),
+                getString(R.string.fuente_wolfram)};
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.titulo_seleccionar_fuente)
+                .setSingleChoiceItems(choices, selectedSource, (dialog, choice) -> {
+                    dialog.dismiss();
+                    if (choice != selectedSource) {
+                        requestGeneration++;
+                        currentHtmlContent = null;
+                        selectedSource = choice;
+                        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                                .putInt(KEY_SELECTED_SOURCE, selectedSource).apply();
+                        updateSourceLabel();
+                        webvPronostico.loadDataWithBaseURL(null, "", "text/html", "UTF-8", null);
+                        btnSeleccionaLocalidad.setEnabled(true);
+                        btnSeleccionaFuente.setEnabled(true);
+                        if (selectedMunicipalityIndex >= 0 && selectedMunicipalityIndex < municipalities.size())
+                            btnSeleccionaLocalidad.setText(municipalities.get(selectedMunicipalityIndex).getName());
+                    }
+                    if (selectedSource == WOLFRAM && getAppId().isEmpty()) {
+                        showAppIdDialog();
+                    } else if (selectedMunicipalityIndex >= 0
+                            && selectedMunicipalityIndex < municipalities.size()) {
+                        loadForecast(municipalities.get(selectedMunicipalityIndex));
+                    }
+                })
+                .setNegativeButton(R.string.boton_cancelar, null).show();
+    }
+
+    private String getAppId() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(APP_ID_KEY, "").trim();
+    }
+
+    private void showAppIdDialog() {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        input.setHint(R.string.wolfram_app_id_hint);
+        input.setText(getAppId());
+        int inset = (int) (24 * getResources().getDisplayMetrics().density);
+        android.widget.LinearLayout wrapper = new android.widget.LinearLayout(this);
+        wrapper.setPadding(inset, 8, inset, 8);
+        wrapper.addView(input);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.wolfram_configurar)
+                .setMessage(R.string.wolfram_app_id_explicacion)
+                .setView(wrapper)
+                .setPositiveButton(R.string.boton_guardar, (d, w) -> {
+                    String id = input.getText().toString().trim();
+                    if (id.isEmpty()) {
+                        Toast.makeText(this, R.string.wolfram_app_id_requerido,
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+                            .putString(APP_ID_KEY, id).apply();
+                    if (selectedSource == WOLFRAM && selectedMunicipalityIndex >= 0
+                            && selectedMunicipalityIndex < municipalities.size())
+                        loadForecast(municipalities.get(selectedMunicipalityIndex));
+                })
+                .setNeutralButton(R.string.wolfram_portal, (d, w) -> {
+                    Intent intent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://developer.wolframalpha.com/portal/myapps/"));
+                    if (intent.resolveActivity(getPackageManager()) != null) startActivity(intent);
+                })
+                .setNegativeButton(R.string.boton_cancelar, null).show();
+    }
+
+    private void loadWolframForecast(Municipality municipality, int generation) {
+        String id = getAppId();
+        if (id.isEmpty()) {
+            showAppIdDialog();
+            return;
+        }
+        if (!canStartRemoteRequest()) {
+            showWolframNetworkFailureDialog(municipality, getString(R.string.error_sen_conexion));
+            return;
+        }
+        btnSeleccionaLocalidad.setEnabled(false);
+        btnSeleccionaFuente.setEnabled(false);
+        btnSeleccionaLocalidad.setText(getString(R.string.cargando_municipio, municipality.getName()));
+        wolframRepository.getForecast(this, municipality, id, new WolframAlphaRepository.Callback() {
+            @Override public void onSuccess(String html) {
+                if (generation != requestGeneration || isFinishing() || isDestroyed()) return;
+                currentHtmlContent = html;
+                btnSeleccionaLocalidad.setEnabled(true);
+                btnSeleccionaFuente.setEnabled(true);
+                btnSeleccionaLocalidad.setText(municipality.getName());
+                webvPronostico.loadDataWithBaseURL("https://api.wolframalpha.com/",
+                        html, "text/html", "UTF-8", null);
+                // Notifications and widgets remain exclusively MeteoGalicia-backed.
+            }
+
+            @Override public void onError(Exception exception) {
+                if (generation != requestGeneration || isFinishing() || isDestroyed()) return;
+                btnSeleccionaLocalidad.setEnabled(true);
+                btnSeleccionaFuente.setEnabled(true);
+                btnSeleccionaLocalidad.setText(municipality.getName());
+                if (exception instanceof ForecastRepository.NetworkFailureException) {
+                    ForecastRepository.NetworkFailureException e =
+                            (ForecastRepository.NetworkFailureException) exception;
+                    int message = e.isCaptivePortal() ? R.string.error_portal_cautivo
+                            : e.isInternetReachable() ? R.string.error_backend_no_disponible
+                            : R.string.error_internet_no_disponible;
+                    showWolframNetworkFailureDialog(municipality, getString(message));
+                } else if (exception instanceof WolframAlphaApiClient.ApiHttpException
+                        && ((((WolframAlphaApiClient.ApiHttpException) exception).getStatus() == 401)
+                        || (((WolframAlphaApiClient.ApiHttpException) exception).getStatus() == 403))) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setMessage(R.string.wolfram_app_id_invalido)
+                            .setPositiveButton(R.string.wolfram_configurar,
+                                    (d, w) -> showAppIdDialog())
+                            .setNegativeButton(R.string.boton_cancelar, null).show();
+                } else {
+                    android.util.Log.w("MainActivity", "Wolfram forecast failed", exception);
+                    Toast.makeText(MainActivity.this, R.string.wolfram_fallo,
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void showWolframNetworkFailureDialog(Municipality municipality, String message) {
+        WeatherNotificationHelper.showNetworkAlertNotification(this, message);
+        new AlertDialog.Builder(this).setTitle(R.string.atencion_titulo)
+                .setMessage(message)
+                .setPositiveButton(R.string.boton_reintentar, (d, w) -> loadForecast(municipality))
+                .setNegativeButton(R.string.boton_diagnostico,
+                        (d, w) -> openNetworkDiagnostics()).show();
+    }
+
     private void showNetworkFailureDialog(Municipality municipality, String reasonMessage) {
         WeatherNotificationHelper.showNetworkAlertNotification(this, reasonMessage);
 
