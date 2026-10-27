@@ -31,3 +31,10 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
+      - name: Lint diagnostics on failure
+        if: failure()
+        run: |
+          if [ -f app/build/reports/lint-results-debug.txt ]; then
+            cat app/build/reports/lint-results-debug.txt
+          fi
+
