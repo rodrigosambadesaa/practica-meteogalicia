@@ -151,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putInt(KEY_SELECTED_MUNICIPALITY_INDEX, selectedMunicipalityIndex);
         outState.putInt(KEY_SELECTED_SOURCE, selectedSource);
-        if (currentHtmlContent != null) {
+        // Wolfram|Alpha API terms prohibit caching its results; only MeteoGalicia HTML is saved.
+        if (currentHtmlContent != null && selectedSource == METEOGALICIA) {
             outState.putString(KEY_FORECAST_HTML, currentHtmlContent);
         }
         webvPronostico.saveState(outState);
