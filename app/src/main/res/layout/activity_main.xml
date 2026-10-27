@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -46,7 +47,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_info_desc"
             android:src="@android:drawable/ic_dialog_info"
-            android:tint="@color/white" />
+            app:tint="@color/white" />
     </LinearLayout>
 
     <LinearLayout
@@ -74,7 +75,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_diagnostico"
             android:src="@android:drawable/ic_menu_compass"
-            android:tint="@color/colorPrimary" />
+            app:tint="@color/colorPrimary" />
 
         <ImageButton
             android:id="@+id/ibtn_telefono"
@@ -83,7 +84,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_llamada"
             android:src="@android:drawable/stat_sys_phone_call"
-            android:tint="@color/colorPrimary" />
+            app:tint="@color/colorPrimary" />
     </LinearLayout>
 
     <Button
