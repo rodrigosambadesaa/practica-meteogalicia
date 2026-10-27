@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -46,7 +47,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_info_desc"
             android:src="@android:drawable/ic_dialog_info"
-            android:tint="@color/white" />
+            app:tint="@color/white" />
     </LinearLayout>
 
     <LinearLayout
@@ -74,7 +75,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_diagnostico"
             android:src="@android:drawable/ic_menu_compass"
-            android:tint="@color/colorPrimary" />
+            app:tint="@color/colorPrimary" />
 
         <ImageButton
             android:id="@+id/ibtn_telefono"
@@ -83,7 +84,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/boton_llamada"
             android:src="@android:drawable/stat_sys_phone_call"
-            android:tint="@color/colorPrimary" />
+            app:tint="@color/colorPrimary" />
     </LinearLayout>
 
     <Button
@@ -94,6 +95,28 @@
         android:layout_marginEnd="16dp"
         android:background="@drawable/bg_primary_button"
         android:text="@string/seleccione_localidad"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/titulo_seleccionar_fuente"
+        android:textColor="@color/textPrimary"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/btn_seleccionaFuente"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_primary_button"
+        android:text="@string/fuente_meteogalicia"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="16sp" />
