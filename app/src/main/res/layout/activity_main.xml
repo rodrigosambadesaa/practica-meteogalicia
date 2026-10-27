@@ -98,6 +98,28 @@
         android:textColor="@color/white"
         android:textSize="16sp" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:text="@string/titulo_seleccionar_fuente"
+        android:textColor="@color/textPrimary"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/btn_seleccionaFuente"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_primary_button"
+        android:text="@string/fuente_meteogalicia"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
     <WebView
         android:id="@+id/webv_pronostico"
         android:layout_width="match_parent"
