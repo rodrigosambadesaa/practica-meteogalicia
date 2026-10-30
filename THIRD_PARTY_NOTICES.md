@@ -49,3 +49,14 @@ SOFTWARE.
 ## 4. Dependencias Android de Terceros
 - **AndroidX Libraries (AppCompat, ConstraintLayout, Test Extensions)**: Apache License 2.0.
 - **JUnit 4**: Eclipse Public License 1.0.
+
+---
+
+## 5. Iconos meteorológicos Meteocons
+- **Autor original:** Bas Milius (copyright 2020–2022).
+- **Repositorio de origen utilizado:** https://github.com/rodrigosambadesaa/weather-icons (copia de Meteocons).
+- **Proyecto original:** https://github.com/basmilius/weather-icons
+- **Licencia:** MIT (SPDX-License-Identifier: MIT).
+- **Archivos incorporados:** `app/src/main/assets/meteocons/*.svg`.
+- **Texto completo de la licencia:** `app/src/main/assets/meteocons/LICENSE` (incluido en la aplicación).
+- **Nota:** los SVG se distribuyen localmente, sin cargar recursos gráficos desde proveedores externos.
