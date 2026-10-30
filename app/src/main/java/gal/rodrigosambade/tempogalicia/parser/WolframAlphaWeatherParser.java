@@ -3,6 +3,7 @@ package gal.rodrigosambade.tempogalicia.parser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import gal.rodrigosambade.tempogalicia.util.WeatherIcons;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -73,7 +74,7 @@ public final class WolframAlphaWeatherParser {
                 .append("<style>body{font-family:sans-serif;background:#f4f8fc;color:#213246;padding:16px;line-height:1.5}")
                 .append("h1{font-size:21px}h2{font-size:17px;margin:0 0 8px;color:#145993}")
                 .append("section{padding:15px;margin:12px 0;background:white;border-radius:12px}")
-                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}</style></head><body>")
+                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}.weather-symbol{width:76px;height:76px;display:block;margin:3px 0 8px}</style></head><body>")
                 .append("<h1>El tiempo en ").append(escapeHtml(municipality)).append("</h1>")
                 .append("<small>Fuente: Wolfram|Alpha · Consulta: ")
                 .append(escapeHtml("weather " + municipality)).append("</small>");
@@ -98,8 +99,9 @@ public final class WolframAlphaWeatherParser {
             }
             if (contents.length() == 0) continue;
             String title = translatedHeading(id, pod.optString("title", ""));
-            html.append("<section><h2>").append(escapeHtml(title)).append("</h2><p>")
-                    .append(escapeHtml(translateWeatherTerms(contents.toString())))
+            html.append("<section><h2>").append(escapeHtml(title)).append("</h2>")
+                    .append(WeatherIcons.htmlIcon(WeatherIcons.forConditions(contents.toString())))
+                    .append("<p>").append(escapeHtml(translateWeatherTerms(contents.toString())))
                     .append("</p></section>");
             added++;
         }
