@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
  */
 public final class WeatherIconAssets {
     private static final Pattern PLACEHOLDER =
-            Pattern.compile("src=\\\"weather-icon://([a-z-]+)\\\"");
+            Pattern.compile("src=\"weather-icon://([a-z-]+)\"");
     private static final String FALLBACK =
-            "src=\\\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201%201'/%3E\\\"";
+            "src=\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201%201'/%3E\"";
 
     private WeatherIconAssets() { }
 
@@ -50,8 +50,8 @@ public final class WeatherIconAssets {
             while ((read = stream.read(bytes)) != -1) {
                 data.write(bytes, 0, read);
             }
-            return "src=\\\"data:image/svg+xml;base64,"
-                    + Base64.encodeToString(data.toByteArray(), Base64.NO_WRAP) + "\\\"";
+            return "src=\"data:image/svg+xml;base64,"
+                    + Base64.encodeToString(data.toByteArray(), Base64.NO_WRAP) + "\"";
         } catch (IOException e) {
             android.util.Log.w("WeatherIconAssets", "Missing bundled icon: " + name, e);
             return FALLBACK;
