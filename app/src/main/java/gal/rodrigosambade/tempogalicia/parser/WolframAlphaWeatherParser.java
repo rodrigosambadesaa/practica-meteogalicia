@@ -74,7 +74,7 @@ public final class WolframAlphaWeatherParser {
                 .append("<style>body{font-family:sans-serif;background:#f4f8fc;color:#213246;padding:16px;line-height:1.5}")
                 .append("h1{font-size:21px}h2{font-size:17px;margin:0 0 8px;color:#145993}")
                 .append("section{padding:15px;margin:12px 0;background:white;border-radius:12px}")
-                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}.weather-symbol{width:76px;height:76px;display:block;margin:3px 0 8px}</style></head><body>")
+                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}.weather-symbol{width:76px;height:76px;display:block;margin:3px 0 8px}span.weather-symbol{font-size:52px;line-height:76px}</style></head><body>")
                 .append("<h1>El tiempo en ").append(escapeHtml(municipality)).append("</h1>")
                 .append("<small>Fuente: Wolfram|Alpha · Consulta: ")
                 .append(escapeHtml("weather " + municipality)).append("</small>");
@@ -88,6 +88,7 @@ public final class WolframAlphaWeatherParser {
             if ("Input".equalsIgnoreCase(id) || id.startsWith("Assumptions")) continue;
             Object subpods = pod.opt("subpods");
             StringBuilder contents = new StringBuilder();
+            StringBuilder subpodConditions = new StringBuilder();
             for (int j = 0; j < count(subpods); j++) {
                 JSONObject part = item(subpods, j);
                 if (part == null) continue;
@@ -96,11 +97,28 @@ public final class WolframAlphaWeatherParser {
                     if (contents.length() != 0) contents.append("\n\n");
                     contents.append(data);
                 }
+                // A few WA response variants provide a condition as a subpod
+                // title or image description instead of inside plaintext.
+                subpodConditions.append(' ').append(part.optString("title", ""));
+                JSONObject image = part.optJSONObject("img");
+                if (image != null) {
+                    subpodConditions.append(' ').append(image.optString("alt", ""));
+                }
             }
             if (contents.length() == 0) continue;
-            String title = translatedHeading(id, pod.optString("title", ""));
+            String originalTitle = pod.optString("title", "");
+            String title = translatedHeading(id, originalTitle);
+            String icon = WeatherIcons.forConditions(contents.toString());
+            if (icon == null) {
+                icon = WeatherIcons.forConditions(subpodConditions.toString());
+            }
+            if (icon == null && isConditionPod(id, originalTitle)) {
+                // Show the Meteocons "not available" symbol rather than
+                // omitting icons or inventing a weather condition.
+                icon = "not-available";
+            }
             html.append("<section><h2>").append(escapeHtml(title)).append("</h2>")
-                    .append(WeatherIcons.htmlIcon(WeatherIcons.forConditions(contents.toString())))
+                    .append(WeatherIcons.htmlIcon(icon))
                     .append("<p>").append(escapeHtml(translateWeatherTerms(contents.toString())))
                     .append("</p></section>");
             added++;
@@ -111,6 +129,18 @@ public final class WolframAlphaWeatherParser {
                 .append("valores y expresiones pueden permanecer en el idioma original. ")
                 .append("No se han estimado datos ausentes.</small></body></html>");
         return html.toString();
+    }
+
+    private static boolean isConditionPod(String id, String title) {
+        String normalizedId = id == null ? "" : id.toLowerCase(Locale.ROOT);
+        String normalizedTitle = title == null ? "" : title.toLowerCase(Locale.ROOT);
+        return normalizedId.startsWith("instantaneousweather")
+                || normalizedId.startsWith("weatherforecast")
+                || normalizedId.startsWith("currentweather")
+                || normalizedId.startsWith("weatherconditions")
+                || normalizedTitle.startsWith("latest recorded weather")
+                || normalizedTitle.startsWith("weather forecast")
+                || normalizedTitle.startsWith("current weather");
     }
 
     private static int count(Object json) {
