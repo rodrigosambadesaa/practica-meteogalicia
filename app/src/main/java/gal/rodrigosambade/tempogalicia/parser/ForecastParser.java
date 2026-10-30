@@ -3,6 +3,7 @@ package gal.rodrigosambade.tempogalicia.parser;
 import gal.rodrigosambade.tempogalicia.model.Forecast;
 import gal.rodrigosambade.tempogalicia.model.ForecastDay;
 import gal.rodrigosambade.tempogalicia.model.Municipality;
+import gal.rodrigosambade.tempogalicia.util.WeatherIcons;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -100,7 +101,7 @@ public class ForecastParser {
                 .append(".date { font-size: 14px; font-weight: 700; color: #14213D; }\n")
                 .append(".moon { font-size: 12px; font-weight: 600; color: #475569; background: #F1F5F9; padding: 4px 8px; border-radius: 12px; }\n")
                 .append(".main-weather { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }\n")
-                .append(".weather-icon { font-size: 38px; }\n")
+                .append(".weather-icon { width: 76px; min-height: 70px; } .weather-symbol { width: 72px; height: 72px; display:block; }\n")
                 .append(".temps { text-align: right; }\n")
                 .append(".temp-max { font-size: 26px; font-weight: bold; color: #14213D; }\n")
                 .append(".temp-min { font-size: 14px; color: #60708D; font-weight: normal; }\n")
@@ -122,7 +123,7 @@ public class ForecastParser {
                     .append("<span class='moon'>").append(escapeHtml(day.getMoonPhase())).append("</span>")
                     .append("</div>")
                     .append("<div class='main-weather'>")
-                    .append("<div class='weather-icon'>").append(getWeatherIcon(day.getRainProbability())).append("</div>")
+                    .append("<div class='weather-icon'>").append(WeatherIcons.htmlIcon(WeatherIcons.forRainProbability(day.getRainProbability()))).append("</div>")
                     .append("<div class='temps'>")
                     .append("<span class='temp-max'>").append(day.getMaxTemperature()).append("°</span> ")
                     .append("<span class='temp-min'>").append(day.getMinTemperature()).append("° min</span>")
@@ -143,13 +144,6 @@ public class ForecastParser {
         sb.append("</body>\n</html>");
 
         return sb.toString();
-    }
-
-    private String getWeatherIcon(int rainProb) {
-        if (rainProb >= 70) return "🌧️";
-        if (rainProb >= 40) return "⛅";
-        if (rainProb >= 20) return "🌤️";
-        return "☀️";
     }
 
     private String escapeHtml(String text) {
