@@ -74,7 +74,7 @@ public final class WolframAlphaWeatherParser {
                 .append("<style>body{font-family:sans-serif;background:#f4f8fc;color:#213246;padding:16px;line-height:1.5}")
                 .append("h1{font-size:21px}h2{font-size:17px;margin:0 0 8px;color:#145993}")
                 .append("section{padding:15px;margin:12px 0;background:white;border-radius:12px}")
-                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}.weather-symbol{width:76px;height:76px;display:block;margin:3px 0 8px}</style></head><body>")
+                .append("p{white-space:pre-wrap;margin:0}small{color:#576979}.weather-symbol{width:76px;height:76px;display:block;margin:3px 0 8px}span.weather-symbol{font-size:52px;line-height:76px}</style></head><body>")
                 .append("<h1>El tiempo en ").append(escapeHtml(municipality)).append("</h1>")
                 .append("<small>Fuente: Wolfram|Alpha · Consulta: ")
                 .append(escapeHtml("weather " + municipality)).append("</small>");
