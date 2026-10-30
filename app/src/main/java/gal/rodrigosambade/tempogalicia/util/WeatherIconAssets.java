@@ -1,60 +1,102 @@
 package gal.rodrigosambade.tempogalicia.util;
 
 import android.content.Context;
-import android.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Embeds bundled SVGs in forecast HTML as data URIs. This avoids additional
- * requests to third-party servers and avoids enabling WebView file access.
+ * Inserts trusted, bundled Meteocons SVG markup directly in forecast HTML.
+ *
+ * An SVG loaded as an image data URI can be suppressed by WebView image
+ * loading/restrictions. Inline SVG keeps icons in the document (offline, with
+ * JavaScript and file access disabled). Every SVG gets unique element IDs so
+ * gradients/symbol references in multiple icons cannot collide.
  */
 public final class WeatherIconAssets {
-    private static final Pattern PLACEHOLDER =
-            Pattern.compile("src=\"weather-icon://([a-z-]+)\"");
-    private static final String FALLBACK =
-            "src=\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201%201'/%3E\"";
+    private static final Pattern ICON_IMG = Pattern.compile(
+            "<img\\b[^>]*\\bsrc=\"weather-icon://([a-z-]+)\"[^>]*>",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SVG_REFERENCE = Pattern.compile(
+            "id=\"([A-Za-z0-9_-]+)\"|url\\(#([A-Za-z0-9_-]+)\\)|((?:xlink:)?href)=\"#([A-Za-z0-9_-]+)\"");
+    private static final String MISSING_ICON =
+            "<span class=\"weather-symbol\" role=\"img\" aria-label=\"Icono no disponible\">🌦️</span>";
+
+    interface IconSource {
+        String read(String name) throws IOException;
+    }
 
     private WeatherIconAssets() { }
 
     public static String inlineIcons(Context context, String html) {
-        if (html == null || html.indexOf("weather-icon://") < 0) return html;
-        Matcher matcher = PLACEHOLDER.matcher(html);
+        return inlineIcons(html, name -> {
+            try (InputStream stream = context.getAssets().open("meteocons/" + name + ".svg");
+                 ByteArrayOutputStream data = new ByteArrayOutputStream()) {
+                byte[] bytes = new byte[4096];
+                int read;
+                while ((read = stream.read(bytes)) != -1) {
+                    if (data.size() + read > 100_000) {
+                        throw new IOException("Weather icon asset is too large");
+                    }
+                    data.write(bytes, 0, read);
+                }
+                return new String(data.toByteArray(), StandardCharsets.UTF_8);
+            }
+        });
+    }
+
+    // Pure Java seam for regression tests (no Android WebView or AppID required).
+    static String inlineIcons(String html, IconSource source) {
+        if (html == null || !html.contains("weather-icon://")) return html;
+        Matcher matcher = ICON_IMG.matcher(html);
         StringBuffer result = new StringBuffer(html.length() + 4096);
-        Map<String, String> resolved = new HashMap<>();
+        int instance = 0;
         while (matcher.find()) {
             String name = matcher.group(1);
-            String replacement = resolved.get(name);
-            if (replacement == null) {
-                replacement = resolve(context, name);
-                resolved.put(name, replacement);
+            String replacement = MISSING_ICON;
+            if (WeatherIcons.isBundled(name)) {
+                try {
+                    replacement = makeInlineSvg(source.read(name), instance, name);
+                } catch (IOException exception) {
+                    // Keep a visible, accessible fallback if an asset is missing.
+                    replacement = MISSING_ICON;
+                }
             }
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+            instance++;
         }
         matcher.appendTail(result);
         return result.toString();
     }
 
-    private static String resolve(Context context, String name) {
-        if (!WeatherIcons.isBundled(name)) return FALLBACK;
-        try (InputStream stream = context.getAssets().open("meteocons/" + name + ".svg");
-             ByteArrayOutputStream data = new ByteArrayOutputStream()) {
-            byte[] bytes = new byte[4096];
-            int read;
-            while ((read = stream.read(bytes)) != -1) {
-                data.write(bytes, 0, read);
-            }
-            return "src=\"data:image/svg+xml;base64,"
-                    + Base64.encodeToString(data.toByteArray(), Base64.NO_WRAP) + "\"";
-        } catch (IOException e) {
-            android.util.Log.w("WeatherIconAssets", "Missing bundled icon: " + name, e);
-            return FALLBACK;
+    private static String makeInlineSvg(String xml, int instance, String iconName) {
+        if (xml == null || !xml.contains("<svg ") || xml.contains("<script")
+                || xml.contains("<foreignObject") || xml.contains("<!DOCTYPE")) {
+            return MISSING_ICON;
         }
+        String prefix = "wx" + instance + "-";
+        Matcher refs = SVG_REFERENCE.matcher(xml);
+        StringBuffer unique = new StringBuffer(xml.length());
+        while (refs.find()) {
+            String replacement;
+            if (refs.group(1) != null) {
+                replacement = "id=\"" + prefix + refs.group(1) + "\"";
+            } else if (refs.group(2) != null) {
+                replacement = "url(#" + prefix + refs.group(2) + ")";
+            } else {
+                replacement = refs.group(3) + "=\"#" + prefix + refs.group(4) + "\"";
+            }
+            refs.appendReplacement(unique, Matcher.quoteReplacement(replacement));
+        }
+        refs.appendTail(unique);
+        String label = "not-available".equals(iconName)
+                ? "Estado meteorológico no especificado"
+                : "Ilustración meteorológica";
+        return unique.toString().replaceFirst("<svg\\b",
+                "<svg class=\"weather-symbol\" role=\"img\" aria-label=\"" + label + "\"");
     }
 }
