@@ -30,6 +30,7 @@ import gal.rodrigosambade.tempogalicia.repository.ForecastRepository;
 import gal.rodrigosambade.tempogalicia.repository.WolframAlphaRepository;
 import gal.rodrigosambade.tempogalicia.api.WolframAlphaApiClient;
 import gal.rodrigosambade.tempogalicia.util.NetworkValidationManager;
+import gal.rodrigosambade.tempogalicia.util.WeatherIconAssets;
 import gal.rodrigosambade.tempogalicia.widget.ForecastAppWidgetProvider;
 
 import net.i2p.android.router.util.ConnectivityAndInternetAccess;
@@ -132,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
                 webvPronostico.loadDataWithBaseURL(
                         selectedSource == METEOGALICIA
                                 ? "https://servizos.meteogalicia.gal/" : "https://api.wolframalpha.com/",
-                        currentHtmlContent,
+                        WeatherIconAssets.inlineIcons(this, currentHtmlContent),
                         "text/html",
                         "UTF-8",
                         null);
@@ -337,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
                     btnSeleccionaLocalidad.setText(municipality.getName());
                     webvPronostico.loadDataWithBaseURL(
                             "https://servizos.meteogalicia.gal/",
-                            htmlContent,
+                            WeatherIconAssets.inlineIcons(MainActivity.this, htmlContent),
                             "text/html",
                             "UTF-8",
                             null);
@@ -471,7 +472,7 @@ public class MainActivity extends AppCompatActivity {
                 btnSeleccionaFuente.setEnabled(true);
                 btnSeleccionaLocalidad.setText(municipality.getName());
                 webvPronostico.loadDataWithBaseURL("https://api.wolframalpha.com/",
-                        html, "text/html", "UTF-8", null);
+                        WeatherIconAssets.inlineIcons(MainActivity.this, html), "text/html", "UTF-8", null);
                 // Notifications and widgets remain exclusively MeteoGalicia-backed.
             }
 
