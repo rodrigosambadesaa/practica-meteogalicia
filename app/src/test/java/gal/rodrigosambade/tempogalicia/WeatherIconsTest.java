@@ -67,6 +67,28 @@ public class WeatherIconsTest {
         assertTrue(new File("src/main/assets/meteocons/LICENSE").isFile());
     }
 
+
+    @Test public void wolframWeatherPodWithoutConditionsGetsExplicitUnknownIcon() throws Exception {
+        String json = "{\"queryresult\":{\"success\":true,\"pods\":["
+                + "{\"id\":\"InstantaneousWeather:WeatherData\",\"title\":\"Latest recorded weather for Cee\","
+                + "\"subpods\":{\"plaintext\":\"temperature | 15 degrees celsius | relative humidity | 72%\"}},"
+                + "{\"id\":\"HistoricalTemperature:WeatherData\",\"subpods\":{\"plaintext\":\"15 degrees celsius\"}}"
+                + "]}}";
+        String html = new WolframAlphaWeatherParser().render(json, "Cee");
+        assertEquals(1, occurrences(html, "src=\"weather-icon://"));
+        assertTrue(html.contains("src=\"weather-icon://not-available\""));
+        assertTrue(html.contains("temperatura"));
+    }
+
+    @Test public void wolframSubpodMetadataCanSupplyWeatherCondition() throws Exception {
+        String json = "{\"queryresult\":{\"success\":true,\"pods\":["
+                + "{\"id\":\"WeatherForecast:WeatherData\",\"subpods\":{"
+                + "\"title\":\"light snow\", \"plaintext\":\"tomorrow | 2 degrees celsius\"}}]}}";
+        String html = new WolframAlphaWeatherParser().render(json, "Cee");
+        assertTrue(html.contains("src=\"weather-icon://snow\""));
+        assertFalse(html.contains("src=\"weather-icon://not-available\""));
+    }
+
     private static int occurrences(String text, String target) {
         int total = 0, at = 0;
         while ((at = text.indexOf(target, at)) >= 0) {
